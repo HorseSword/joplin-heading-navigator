@@ -12,6 +12,7 @@ const pendingScrollVerifications = new WeakMap<EditorView, number>();
 const SCROLL_VERIFY_DELAY_MS = 160;
 const SCROLL_VERIFY_RETRY_DELAY_MS = 260;
 const SCROLL_VERIFY_TOLERANCE_PX = 12;
+const SCROLL_VERIFY_NEGATIVE_TOLERANCE_PX = 1.5;
 const SCROLL_VERIFY_MAX_ATTEMPTS = 2;
 
 type ScrollVerificationMeasurement =
@@ -116,7 +117,10 @@ function createScrollVerifier(options: {
 
                     const tolerance = SCROLL_VERIFY_TOLERANCE_PX;
                     const offsetFromViewportTop = measurement.blockTopOffset;
-                    const needsScroll = Math.abs(offsetFromViewportTop) > tolerance;
+                    const needsScroll =
+                        offsetFromViewportTop < 0
+                            ? Math.abs(offsetFromViewportTop) > SCROLL_VERIFY_NEGATIVE_TOLERANCE_PX
+                            : offsetFromViewportTop > tolerance;
 
                     if (!needsScroll) {
                         // Stay on guard for late layout shifts (e.g. images loading) that can push the heading
