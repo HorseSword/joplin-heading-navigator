@@ -281,7 +281,7 @@ export function createPanelCss(theme: PanelTheme, dimensions: PanelDimensions): 
     display: flex;
     flex-direction: column;
     gap: 2px;
-    padding: 8px 40px 8px 12px;
+    padding: 8px 52px 8px 12px;
     cursor: pointer;
     background-color: transparent;
 }
@@ -310,10 +310,11 @@ export function createPanelCss(theme: PanelTheme, dimensions: PanelDimensions): 
 
 .heading-navigator-copy-button {
     position: absolute;
-    top: 8px;
+    top: 50%;
+    transform: translateY(-50%);
     right: 8px;
-    width: 24px;
-    height: 24px;
+    width: 28px;
+    height: 28px;
     padding: 0;
     border: none;
     border-radius: 4px;
@@ -322,11 +323,12 @@ export function createPanelCss(theme: PanelTheme, dimensions: PanelDimensions): 
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 14px;
+    font-size: 17px;
+    line-height: 1;
     cursor: pointer;
     opacity: 0;
     pointer-events: none;
-    transition: opacity 120ms ease-out, background-color 120ms ease-out, color 120ms ease-out;
+    transition: opacity 160ms ease-out, background-color 120ms ease-out, color 120ms ease-out;
 }
 
 .heading-navigator-item:hover .heading-navigator-copy-button,
@@ -346,6 +348,22 @@ export function createPanelCss(theme: PanelTheme, dimensions: PanelDimensions): 
 }
 
 .heading-navigator-item.is-selected .heading-navigator-copy-button {
+    color: ${theme.selectedForeground};
+}
+
+.heading-navigator-copy-button.is-copied {
+    background-color: ${theme.highlightBackground};
+    color: ${theme.selectedForeground};
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 220ms ease-in 120ms, background-color 120ms ease-out, color 120ms ease-out;
+}
+
+.heading-navigator-copy-button.is-copied::before {
+    content: '\\2713';
+}
+
+.heading-navigator-item.is-selected .heading-navigator-copy-button.is-copied {
     color: ${theme.selectedForeground};
 }
 

@@ -24,7 +24,7 @@
 
 ### Panel UI Modules
 
-- `src/contentScripts/ui/headingPanel.ts`: renders the floating panel DOM, wires keyboard/mouse interactions, manages filtering, and emits preview/select/copy callbacks. Each heading exposes a hover-only copy button that triggers the clipboard flow.
+- `src/contentScripts/ui/headingPanel.ts`: renders the floating panel DOM, wires keyboard/mouse interactions, manages filtering, and emits preview/select/copy callbacks. Each heading exposes a hover-only copy button that animates to a confirmation checkmark and fades out after copying.
 - `src/contentScripts/theme/panelTheme.ts`: derives theme-aware colors from the current editor styles and produces the CSS injected by `HeadingPanel`.
 
 ### Utilities & Data

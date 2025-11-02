@@ -52,6 +52,8 @@ export class HeadingPanel {
 
     private readonly handleDocumentMouseDownListener: (event: MouseEvent) => void;
 
+    private readonly copyAnimationTimers = new WeakMap<HTMLButtonElement, number>();
+
     public constructor(view: EditorView, callbacks: PanelCallbacks, options: PanelDimensions) {
         this.view = view;
         this.onPreview = callbacks.onPreview;
@@ -355,6 +357,8 @@ export class HeadingPanel {
                 event.stopPropagation();
                 event.preventDefault();
                 this.onCopy(heading);
+                this.showCopyFeedback(copyButton);
+                copyButton.blur();
             });
 
             item.appendChild(level);
@@ -385,6 +389,22 @@ export class HeadingPanel {
     private scrollActiveItemIntoView(): void {
         const activeItem = this.list.querySelector<HTMLLIElement>('.heading-navigator-item.is-selected');
         activeItem?.scrollIntoView({ block: 'nearest' });
+    }
+
+    private showCopyFeedback(button: HTMLButtonElement): void {
+        const existingTimer = this.copyAnimationTimers.get(button);
+        if (typeof existingTimer === 'number') {
+            window.clearTimeout(existingTimer);
+        }
+
+        button.classList.add('is-copied');
+
+        const timerId = window.setTimeout(() => {
+            button.classList.remove('is-copied');
+            this.copyAnimationTimers.delete(button);
+        }, 600);
+
+        this.copyAnimationTimers.set(button, timerId);
     }
 }
 
