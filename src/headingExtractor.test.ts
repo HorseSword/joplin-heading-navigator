@@ -97,4 +97,54 @@ describe('extractHeadings', () => {
             level: 1,
         });
     });
+
+    it('generates correct anchors for duplicate headings', () => {
+        const content = `# Introduction
+## Introduction
+### Introduction`;
+        const headings = extractHeadings(content);
+
+        expect(headings[0].anchor).toBe('introduction');
+        expect(headings[1].anchor).toBe('introduction-2');
+        expect(headings[2].anchor).toBe('introduction-3');
+    });
+
+    it('generates anchors with special characters', () => {
+        const content = `# Hello World!
+## API & Configuration
+### Test-Section`;
+        const headings = extractHeadings(content);
+
+        expect(headings[0].anchor).toBe('hello-world');
+        expect(headings[1].anchor).toBe('api-configuration');
+        expect(headings[2].anchor).toBe('test-section');
+    });
+
+    it('generates fallback anchor for empty slug', () => {
+        const content = '# !!!';
+        const headings = extractHeadings(content);
+
+        expect(headings).toHaveLength(1);
+        expect(headings[0].anchor).toMatch(/^heading-\d+$/);
+    });
+
+    it('generates anchors with mixed case normalized to lowercase', () => {
+        const content = `# Hello World
+## UPPERCASE HEADING
+### MixedCase`;
+        const headings = extractHeadings(content);
+
+        expect(headings[0].anchor).toBe('hello-world');
+        expect(headings[1].anchor).toBe('uppercase-heading');
+        expect(headings[2].anchor).toBe('mixedcase');
+    });
+
+    it('generates unique anchors for similar headings with different punctuation', () => {
+        const content = `# Test: Example
+## Test Example`;
+        const headings = extractHeadings(content);
+
+        expect(headings[0].anchor).toBe('test-example');
+        expect(headings[1].anchor).toBe('test-example-2');
+    });
 });

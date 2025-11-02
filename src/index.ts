@@ -4,10 +4,7 @@ import { CODEMIRROR_CONTENT_SCRIPT_ID, COMMAND_GO_TO_HEADING, EDITOR_COMMAND_TOG
 import logger from './logger';
 import { loadPanelDimensions, registerPanelSettings } from './settings';
 import type { ContentScriptToPluginMessage, CopyHeadingLinkMessage } from './messages';
-
-function escapeLinkText(text: string): string {
-    return text.replace(/\\/g, '\\\\').replace(/\[/g, '\\[').replace(/\]/g, '\\]');
-}
+import { formatHeadingLink } from './linkFormatting';
 
 async function handleCopyHeadingLink(message: CopyHeadingLinkMessage): Promise<void> {
     const { noteId, headingText, headingAnchor } = message;
@@ -21,9 +18,7 @@ async function handleCopyHeadingLink(message: CopyHeadingLinkMessage): Promise<v
         }
 
         const noteTitle = typeof note.title === 'string' && note.title ? note.title : 'Untitled';
-        const label = `${escapeLinkText(headingText)} @ ${escapeLinkText(noteTitle)}`;
-        const target = `:/${noteId}#${headingAnchor}`;
-        const markdown = `[${label}](${target})`;
+        const markdown = formatHeadingLink(headingText, noteTitle, noteId, headingAnchor);
 
         await joplin.clipboard.writeText(markdown);
         logger.info('Copied heading link to clipboard', { noteId, headingAnchor });
