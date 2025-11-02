@@ -58,6 +58,29 @@ function normalizeHeadingText(nodeName: string, raw: string): string {
     return stripInlineMarkdown(raw.trim());
 }
 
+function slugifyHeadingText(text: string): string {
+    const normalized = text
+        .normalize('NFKD')
+        .replace(/[\u0300-\u036f]/g, '')
+        .toLowerCase();
+    const sanitized = normalized.replace(/[^\p{Letter}\p{Number}\s-]/gu, ' ').trim();
+    if (!sanitized) {
+        return '';
+    }
+    return sanitized.replace(/\s+/g, '-').replace(/-+/g, '-').replace(/^-|-$/g, '');
+}
+
+function createUniqueAnchor(base: string, fallback: string, counts: Map<string, number>): string {
+    const anchorBase = base || fallback;
+    const previousCount = counts.get(anchorBase);
+    if (previousCount === undefined) {
+        counts.set(anchorBase, 1);
+        return anchorBase;
+    }
+    counts.set(anchorBase, previousCount + 1);
+    return `${anchorBase}-${previousCount}`;
+}
+
 function createLineResolver(content: string): (position: number) => number {
     const lineStartIndices: number[] = [0];
 
@@ -91,6 +114,7 @@ export function extractHeadings(content: string): HeadingItem[] {
         const tree = parser.parse(content);
         const headings: HeadingItem[] = [];
         const resolveLineNumber = createLineResolver(content);
+        const anchorCounts = new Map<string, number>();
 
         tree.iterate({
             enter(node) {
@@ -107,6 +131,8 @@ export function extractHeadings(content: string): HeadingItem[] {
                     return;
                 }
 
+                const anchor = createUniqueAnchor(slugifyHeadingText(text), `heading-${from}`, anchorCounts);
+
                 headings.push({
                     id: `heading-${from}`,
                     text,
@@ -114,6 +140,7 @@ export function extractHeadings(content: string): HeadingItem[] {
                     from,
                     to,
                     line: resolveLineNumber(from),
+                    anchor,
                 });
             },
         });

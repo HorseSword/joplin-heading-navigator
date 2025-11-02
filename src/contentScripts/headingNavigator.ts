@@ -1,8 +1,9 @@
 import { EditorSelection, EditorState } from '@codemirror/state';
 import { EditorView, ViewUpdate } from '@codemirror/view';
-import type { CodeMirrorControl, MarkdownEditorContentScriptModule } from 'api/types';
+import type { CodeMirrorControl, ContentScriptContext, MarkdownEditorContentScriptModule } from 'api/types';
 import { EDITOR_COMMAND_TOGGLE_PANEL } from '../constants';
 import type { HeadingItem, PanelDimensions } from '../types';
+import type { ContentScriptToPluginMessage } from '../messages';
 import { extractHeadings } from '../headingExtractor';
 import { HeadingPanel, type PanelCloseReason } from './ui/headingPanel';
 import { normalizePanelDimensions } from '../panelDimensions';
@@ -266,7 +267,7 @@ function setEditorSelection(view: EditorView, heading: HeadingItem, focusEditor:
     }
 }
 
-export default function headingNavigator(): MarkdownEditorContentScriptModule {
+export default function headingNavigator(context: ContentScriptContext): MarkdownEditorContentScriptModule {
     return {
         plugin: (editorControl: CodeMirrorControl) => {
             // Note: Extensions and listeners are scoped to this EditorView instance.
@@ -279,6 +280,47 @@ export default function headingNavigator(): MarkdownEditorContentScriptModule {
             let panelDimensions: PanelDimensions = normalizePanelDimensions();
             let initialSelectionRange: { from: number; to: number } | null = null;
             let initialScrollSnapshot: ReturnType<EditorView['scrollSnapshot']> | null = null;
+            const noteIdFacet = editorControl.joplinExtensions?.noteIdFacet;
+
+            const resolveNoteId = (): string | null => {
+                if (!noteIdFacet) {
+                    return null;
+                }
+                try {
+                    const value = view.state.facet(noteIdFacet);
+                    if (Array.isArray(value)) {
+                        const candidate = value[0];
+                        return typeof candidate === 'string' && candidate ? candidate : null;
+                    }
+                    return typeof value === 'string' && value ? value : null;
+                } catch (error) {
+                    logger.warn('Failed to resolve active note id from facet', error);
+                    return null;
+                }
+            };
+
+            const sendCopyRequest = async (heading: HeadingItem): Promise<void> => {
+                const noteId = resolveNoteId();
+                if (!noteId) {
+                    logger.warn('Unable to copy heading link because the active note id is unavailable', {
+                        headingId: heading.id,
+                    });
+                    return;
+                }
+
+                const message: ContentScriptToPluginMessage = {
+                    type: 'copyHeadingLink',
+                    noteId,
+                    headingText: heading.text,
+                    headingAnchor: heading.anchor,
+                };
+
+                try {
+                    await context.postMessage(message);
+                } catch (error) {
+                    logger.error('Failed to request heading link copy', error);
+                }
+            };
 
             const ensurePanel = (): HeadingPanel => {
                 if (!panel) {
@@ -296,6 +338,10 @@ export default function headingNavigator(): MarkdownEditorContentScriptModule {
                             },
                             onClose: (reason: PanelCloseReason) => {
                                 closePanel(true, reason === 'escape');
+                            },
+                            onCopy: (heading) => {
+                                selectedHeadingId = heading.id;
+                                void sendCopyRequest(heading);
                             },
                         },
                         panelDimensions

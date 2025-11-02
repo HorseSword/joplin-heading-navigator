@@ -12,6 +12,7 @@ export interface PanelCallbacks {
     onPreview: (heading: HeadingItem) => void;
     onSelect: (heading: HeadingItem) => void;
     onClose: (reason: PanelCloseReason) => void;
+    onCopy: (heading: HeadingItem) => void;
 }
 
 export class HeadingPanel {
@@ -41,6 +42,8 @@ export class HeadingPanel {
 
     private readonly onClose: (reason: PanelCloseReason) => void;
 
+    private readonly onCopy: (heading: HeadingItem) => void;
+
     private readonly handleInputListener: () => void;
 
     private readonly handleKeyDownListener: (event: KeyboardEvent) => void;
@@ -54,6 +57,7 @@ export class HeadingPanel {
         this.onPreview = callbacks.onPreview;
         this.onSelect = callbacks.onSelect;
         this.onClose = callbacks.onClose;
+        this.onCopy = callbacks.onCopy;
         this.options = options;
 
         this.container = document.createElement('div');
@@ -297,6 +301,9 @@ export class HeadingPanel {
 
     private handleListClick(event: MouseEvent): void {
         const target = event.target as HTMLElement | null;
+        if (target?.closest('.heading-navigator-copy-button')) {
+            return;
+        }
         const itemElement = target?.closest<HTMLLIElement>('.heading-navigator-item');
         if (!itemElement) {
             return;
@@ -339,8 +346,20 @@ export class HeadingPanel {
             text.className = 'heading-navigator-item-text';
             text.textContent = heading.text;
 
+            const copyButton = document.createElement('button');
+            copyButton.type = 'button';
+            copyButton.className = 'heading-navigator-copy-button';
+            copyButton.title = 'Copy heading link';
+            copyButton.setAttribute('aria-label', 'Copy heading link');
+            copyButton.addEventListener('click', (event) => {
+                event.stopPropagation();
+                event.preventDefault();
+                this.onCopy(heading);
+            });
+
             item.appendChild(level);
             item.appendChild(text);
+            item.appendChild(copyButton);
 
             if (heading.id === this.selectedHeadingId) {
                 item.classList.add('is-selected');

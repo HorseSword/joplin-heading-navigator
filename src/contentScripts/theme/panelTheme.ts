@@ -277,10 +277,11 @@ export function createPanelCss(theme: PanelTheme, dimensions: PanelDimensions): 
 }
 
 .heading-navigator-item {
+    position: relative;
     display: flex;
     flex-direction: column;
     gap: 2px;
-    padding: 8px 12px;
+    padding: 8px 40px 8px 12px;
     cursor: pointer;
     background-color: transparent;
 }
@@ -305,6 +306,47 @@ export function createPanelCss(theme: PanelTheme, dimensions: PanelDimensions): 
     overflow: hidden;
     text-overflow: ellipsis;
     font-weight: 500;
+}
+
+.heading-navigator-copy-button {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    width: 24px;
+    height: 24px;
+    padding: 0;
+    border: none;
+    border-radius: 4px;
+    background-color: transparent;
+    color: ${theme.muted};
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 14px;
+    cursor: pointer;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 120ms ease-out, background-color 120ms ease-out, color 120ms ease-out;
+}
+
+.heading-navigator-item:hover .heading-navigator-copy-button,
+.heading-navigator-item:focus-within .heading-navigator-copy-button {
+    opacity: 1;
+    pointer-events: auto;
+}
+
+.heading-navigator-copy-button::before {
+    content: '\\2398';
+}
+
+.heading-navigator-copy-button:hover,
+.heading-navigator-copy-button:focus-visible {
+    background-color: ${theme.highlightBackground};
+    color: ${theme.selectedForeground};
+}
+
+.heading-navigator-item.is-selected .heading-navigator-copy-button {
+    color: ${theme.selectedForeground};
 }
 
 .heading-navigator-empty {
