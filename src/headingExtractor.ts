@@ -68,7 +68,7 @@ function createUniqueAnchor(text: string, fallback: string, counts: Map<string, 
         return anchorBase;
     }
     counts.set(anchorBase, previousCount + 1);
-    return `${anchorBase}-${previousCount}`;
+    return `${anchorBase}-${previousCount + 1}`;
 }
 
 function createLineResolver(content: string): (position: number) => number {
