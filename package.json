@@ -26,6 +26,10 @@
         "@types/node": "^24.9.2",
         "@typescript-eslint/eslint-plugin": "^8.46.2",
         "@typescript-eslint/parser": "^8.46.2",
+        "@codemirror/state": "6.5.2",
+        "@codemirror/view": "6.38.6",
+        "@lezer/markdown": "1.5.1",
+        "@joplin/utils": "^3.5.1",
         "chalk": "^4.1.0",
         "copy-webpack-plugin": "^13.0.1",
         "eslint": "^9.39.0",
@@ -44,10 +48,6 @@
         "webpack-cli": "^6.0.1"
     },
     "dependencies": {
-        "@joplin/fork-uslug": "^2.0.3",
-        "@joplin/utils": "^3.5.1",
-        "@codemirror/state": "6.5.2",
-        "@codemirror/view": "6.38.6",
-        "@lezer/markdown": "1.5.1"
+        "@joplin/fork-uslug": "^2.0.3"
     }
 }
