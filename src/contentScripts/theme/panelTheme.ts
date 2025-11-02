@@ -315,30 +315,34 @@ export function createPanelCss(theme: PanelTheme, dimensions: PanelDimensions): 
     right: 8px;
     width: 28px;
     height: 28px;
-    padding: 0;
+    padding: 4px;
     border: none;
     border-radius: 4px;
-    background-color: transparent;
-    color: ${theme.muted};
+    background-color: ${theme.highlightBackground}40;
+    color: ${theme.foreground};
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 17px;
-    line-height: 1;
     cursor: pointer;
     opacity: 0;
     pointer-events: none;
     transition: opacity 160ms ease-out, background-color 120ms ease-out, color 120ms ease-out;
 }
 
+.heading-navigator-copy-button svg {
+    width: 16px;
+    height: 16px;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 2;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+}
+
 .heading-navigator-item:hover .heading-navigator-copy-button,
 .heading-navigator-item:focus-within .heading-navigator-copy-button {
     opacity: 1;
     pointer-events: auto;
-}
-
-.heading-navigator-copy-button::before {
-    content: '\\2398';
 }
 
 .heading-navigator-copy-button:hover,
@@ -359,8 +363,12 @@ export function createPanelCss(theme: PanelTheme, dimensions: PanelDimensions): 
     transition: opacity 220ms ease-in 120ms, background-color 120ms ease-out, color 120ms ease-out;
 }
 
-.heading-navigator-copy-button.is-copied::before {
-    content: '\\2713';
+.heading-navigator-copy-button.is-copied svg path:first-child {
+    display: none;
+}
+
+.heading-navigator-copy-button.is-copied svg path:last-child {
+    d: path('M20 6L9 17l-5-5');
 }
 
 .heading-navigator-item.is-selected .heading-navigator-copy-button.is-copied {

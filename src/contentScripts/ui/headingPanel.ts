@@ -353,6 +353,20 @@ export class HeadingPanel {
             copyButton.className = 'heading-navigator-copy-button';
             copyButton.title = 'Copy heading link';
             copyButton.setAttribute('aria-label', 'Copy heading link');
+
+            const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+            svg.setAttribute('viewBox', '0 0 24 24');
+
+            const path1 = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+            path1.setAttribute('d', 'M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71');
+
+            const path2 = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+            path2.setAttribute('d', 'M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71');
+
+            svg.appendChild(path1);
+            svg.appendChild(path2);
+            copyButton.appendChild(svg);
+
             copyButton.addEventListener('click', (event) => {
                 event.stopPropagation();
                 event.preventDefault();
