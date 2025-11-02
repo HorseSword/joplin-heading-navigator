@@ -1,6 +1,8 @@
 import { parser } from '@lezer/markdown';
 import logger from './logger';
 import { HeadingItem } from './types';
+// eslint-disable-next-line @typescript-eslint/no-require-imports
+const uslug = require('@joplin/fork-uslug');
 
 function parseHeadingLevel(nodeName: string): number | null {
     if (nodeName.startsWith('ATXHeading')) {
@@ -58,20 +60,8 @@ function normalizeHeadingText(nodeName: string, raw: string): string {
     return stripInlineMarkdown(raw.trim());
 }
 
-function slugifyHeadingText(text: string): string {
-    const normalized = text
-        .normalize('NFKD')
-        .replace(/[\u0300-\u036f]/g, '')
-        .toLowerCase();
-    const sanitized = normalized.replace(/[^\p{Letter}\p{Number}\s-]/gu, ' ').trim();
-    if (!sanitized) {
-        return '';
-    }
-    return sanitized.replace(/\s+/g, '-').replace(/-+/g, '-').replace(/^-|-$/g, '');
-}
-
-function createUniqueAnchor(base: string, fallback: string, counts: Map<string, number>): string {
-    const anchorBase = base || fallback;
+function createUniqueAnchor(text: string, fallback: string, counts: Map<string, number>): string {
+    const anchorBase = (typeof text === 'string' ? uslug(text) : '') || fallback;
     const previousCount = counts.get(anchorBase);
     if (previousCount === undefined) {
         counts.set(anchorBase, 1);
@@ -131,7 +121,7 @@ export function extractHeadings(content: string): HeadingItem[] {
                     return;
                 }
 
-                const anchor = createUniqueAnchor(slugifyHeadingText(text), `heading-${from}`, anchorCounts);
+                const anchor = createUniqueAnchor(text, `heading-${from}`, anchorCounts);
 
                 headings.push({
                     id: `heading-${from}`,
