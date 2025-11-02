@@ -147,4 +147,29 @@ describe('extractHeadings', () => {
         expect(headings[0].anchor).toBe('test-example');
         expect(headings[1].anchor).toBe('test-example-2');
     });
+
+    it('preserves underscores in emoji shortcodes and similar text', () => {
+        const content = `## :white_check_mark: *Features*
+### snake_case_heading
+#### :fire: hot_topic`;
+        const headings = extractHeadings(content);
+
+        expect(headings[0].text).toBe(':white_check_mark: Features');
+        expect(headings[0].anchor).toBe('white_check_mark-features');
+
+        expect(headings[1].text).toBe('snake_case_heading');
+        expect(headings[1].anchor).toBe('snake_case_heading');
+
+        expect(headings[2].text).toBe(':fire: hot_topic');
+        expect(headings[2].anchor).toBe('fire-hot_topic');
+    });
+
+    it('removes italic underscores but preserves content underscores', () => {
+        const content = `# This is _italic_ text with snake_case
+## _Entire heading italic_`;
+        const headings = extractHeadings(content);
+
+        expect(headings[0].text).toBe('This is italic text with snake_case');
+        expect(headings[1].text).toBe('Entire heading italic');
+    });
 });

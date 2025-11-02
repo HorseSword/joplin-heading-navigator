@@ -31,7 +31,9 @@ function stripInlineMarkdown(text: string): string {
             .replace(/\*\*([^*]+)\*\*/g, '$1')
             .replace(/__([^_]+)__/g, '$1')
             .replace(/\*([^*]+)\*/g, '$1')
-            .replace(/_([^_]+)_/g, '$1')
+            // Only remove underscores if they wrap a word with whitespace or start/end boundaries
+            // Use lookahead/lookbehind to preserve surrounding whitespace
+            .replace(/(?<=^|\s)_([^\s_][^_]*[^\s_]|[^\s_])_(?=\s|$)/g, '$1')
             // Inline code.
             .replace(/`([^`]+)`/g, '$1')
             // Escaped characters.
