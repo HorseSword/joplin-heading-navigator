@@ -1,4 +1,4 @@
-import { EditorSelection, EditorState } from '@codemirror/state';
+﻿import { EditorSelection, EditorState } from '@codemirror/state';
 import { EditorView, ViewUpdate } from '@codemirror/view';
 import type { CodeMirrorControl, ContentScriptContext, MarkdownEditorContentScriptModule } from 'api/types';
 import { EDITOR_COMMAND_TOGGLE_PANEL } from '../constants';
@@ -10,6 +10,7 @@ import { normalizePanelDimensions } from '../panelDimensions';
 import logger from '../logger';
 
 const pendingScrollVerifications = new WeakMap<EditorView, number>();
+// Scroll verifier waits for layout to settle, then retries once for late content shifts.
 const SCROLL_VERIFY_DELAY_MS = 160;
 const SCROLL_VERIFY_RETRY_DELAY_MS = 260;
 const SCROLL_VERIFY_TOLERANCE_PX = 12;
@@ -245,6 +246,9 @@ function setEditorSelection(view: EditorView, heading: HeadingItem, focusEditor:
             pendingScrollVerifications.delete(view);
         }
 
+        // Move the real selection so the caret and heading panel stay synchronized.
+        // Rich Markdown reacts to this by rebuilding image widgets a moment later,
+        // which can nudge the scroll position and force us to verify it afterward.
         view.dispatch({
             selection: targetSelection,
             effects: EditorView.scrollIntoView(targetSelection.main, { y: 'start' }),
@@ -259,8 +263,9 @@ function setEditorSelection(view: EditorView, heading: HeadingItem, focusEditor:
         });
 
         // Trigger visibility checks to catch cases where scrollIntoView bails or later layout
-        // shifts push the target outside the viewport. Start alignment is more resilient to
-        // content changes above the heading since it doesn't depend on relative centering math.
+        // shifts (from those widget rebuilds) push the heading away from the viewport edge.
+        // Start alignment is more resilient to content changes above the heading since it
+        // doesn't depend on relative centering math.
         runVerification(0);
     } catch (error) {
         logger.error('Failed to set editor selection', error);
