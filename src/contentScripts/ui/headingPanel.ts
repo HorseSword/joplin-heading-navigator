@@ -373,6 +373,7 @@ export class HeadingPanel {
                 this.onCopy(heading);
                 this.showCopyFeedback(copyButton);
                 copyButton.blur();
+                this.input.focus();
             });
 
             item.appendChild(level);
