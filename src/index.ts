@@ -3,12 +3,52 @@ import { ContentScriptType, MenuItemLocation, ToolbarButtonLocation } from 'api/
 import { CODEMIRROR_CONTENT_SCRIPT_ID, COMMAND_GO_TO_HEADING, EDITOR_COMMAND_TOGGLE_PANEL } from './constants';
 import logger from './logger';
 import { loadPanelDimensions, registerPanelSettings } from './settings';
+import type { ContentScriptToPluginMessage, CopyHeadingLinkMessage } from './messages';
+import { formatHeadingLink } from './linkFormatting';
+
+async function handleCopyHeadingLink(message: CopyHeadingLinkMessage): Promise<void> {
+    const { noteId, headingText, headingAnchor } = message;
+
+    try {
+        const note = await joplin.data.get(['notes', noteId], { fields: ['id', 'title'] });
+
+        if (!note || typeof note.id !== 'string') {
+            logger.warn('Unable to copy heading link because note could not be resolved', { noteId, headingAnchor });
+            return;
+        }
+
+        const noteTitle = typeof note.title === 'string' && note.title ? note.title : 'Untitled';
+        const markdown = formatHeadingLink(headingText, noteTitle, noteId, headingAnchor);
+
+        await joplin.clipboard.writeText(markdown);
+        logger.info('Copied heading link to clipboard', { noteId, headingAnchor });
+    } catch (error) {
+        logger.error('Failed to copy heading link to clipboard', error);
+    }
+}
 
 async function registerContentScripts(): Promise<void> {
     await joplin.contentScripts.register(
         ContentScriptType.CodeMirrorPlugin,
         CODEMIRROR_CONTENT_SCRIPT_ID,
         './contentScripts/headingNavigator.js'
+    );
+
+    await joplin.contentScripts.onMessage(
+        CODEMIRROR_CONTENT_SCRIPT_ID,
+        async (message: ContentScriptToPluginMessage): Promise<void> => {
+            if (!message || typeof message !== 'object') {
+                return;
+            }
+
+            switch (message.type) {
+                case 'copyHeadingLink':
+                    await handleCopyHeadingLink(message);
+                    return;
+                default:
+                    logger.warn('Received unsupported message from content script', message);
+            }
+        }
     );
 }
 

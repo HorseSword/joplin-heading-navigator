@@ -12,6 +12,7 @@ export interface PanelCallbacks {
     onPreview: (heading: HeadingItem) => void;
     onSelect: (heading: HeadingItem) => void;
     onClose: (reason: PanelCloseReason) => void;
+    onCopy: (heading: HeadingItem) => void;
 }
 
 export class HeadingPanel {
@@ -41,6 +42,8 @@ export class HeadingPanel {
 
     private readonly onClose: (reason: PanelCloseReason) => void;
 
+    private readonly onCopy: (heading: HeadingItem) => void;
+
     private readonly handleInputListener: () => void;
 
     private readonly handleKeyDownListener: (event: KeyboardEvent) => void;
@@ -49,11 +52,14 @@ export class HeadingPanel {
 
     private readonly handleDocumentMouseDownListener: (event: MouseEvent) => void;
 
+    private readonly copyAnimationTimers = new WeakMap<HTMLButtonElement, number>();
+
     public constructor(view: EditorView, callbacks: PanelCallbacks, options: PanelDimensions) {
         this.view = view;
         this.onPreview = callbacks.onPreview;
         this.onSelect = callbacks.onSelect;
         this.onClose = callbacks.onClose;
+        this.onCopy = callbacks.onCopy;
         this.options = options;
 
         this.container = document.createElement('div');
@@ -297,6 +303,9 @@ export class HeadingPanel {
 
     private handleListClick(event: MouseEvent): void {
         const target = event.target as HTMLElement | null;
+        if (target?.closest('.heading-navigator-copy-button')) {
+            return;
+        }
         const itemElement = target?.closest<HTMLLIElement>('.heading-navigator-item');
         if (!itemElement) {
             return;
@@ -339,8 +348,37 @@ export class HeadingPanel {
             text.className = 'heading-navigator-item-text';
             text.textContent = heading.text;
 
+            const copyButton = document.createElement('button');
+            copyButton.type = 'button';
+            copyButton.className = 'heading-navigator-copy-button';
+            copyButton.title = 'Copy heading link';
+            copyButton.setAttribute('aria-label', 'Copy heading link');
+
+            const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+            svg.setAttribute('viewBox', '0 0 24 24');
+
+            const path1 = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+            path1.setAttribute('d', 'M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71');
+
+            const path2 = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+            path2.setAttribute('d', 'M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71');
+
+            svg.appendChild(path1);
+            svg.appendChild(path2);
+            copyButton.appendChild(svg);
+
+            copyButton.addEventListener('click', (event) => {
+                event.stopPropagation();
+                event.preventDefault();
+                this.onCopy(heading);
+                this.showCopyFeedback(copyButton);
+                copyButton.blur();
+                this.input.focus();
+            });
+
             item.appendChild(level);
             item.appendChild(text);
+            item.appendChild(copyButton);
 
             if (heading.id === this.selectedHeadingId) {
                 item.classList.add('is-selected');
@@ -366,6 +404,22 @@ export class HeadingPanel {
     private scrollActiveItemIntoView(): void {
         const activeItem = this.list.querySelector<HTMLLIElement>('.heading-navigator-item.is-selected');
         activeItem?.scrollIntoView({ block: 'nearest' });
+    }
+
+    private showCopyFeedback(button: HTMLButtonElement): void {
+        const existingTimer = this.copyAnimationTimers.get(button);
+        if (typeof existingTimer === 'number') {
+            window.clearTimeout(existingTimer);
+        }
+
+        button.classList.add('is-copied');
+
+        const timerId = window.setTimeout(() => {
+            button.classList.remove('is-copied');
+            this.copyAnimationTimers.delete(button);
+        }, 600);
+
+        this.copyAnimationTimers.set(button, timerId);
     }
 }
 

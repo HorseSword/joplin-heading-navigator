@@ -5,6 +5,7 @@ export interface HeadingItem {
     from: number;
     to: number;
     line: number;
+    anchor: string;
 }
 
 export interface PanelDimensions {

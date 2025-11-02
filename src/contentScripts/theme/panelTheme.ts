@@ -277,10 +277,11 @@ export function createPanelCss(theme: PanelTheme, dimensions: PanelDimensions): 
 }
 
 .heading-navigator-item {
+    position: relative;
     display: flex;
     flex-direction: column;
     gap: 2px;
-    padding: 8px 12px;
+    padding: 8px 52px 8px 12px;
     cursor: pointer;
     background-color: transparent;
 }
@@ -305,6 +306,73 @@ export function createPanelCss(theme: PanelTheme, dimensions: PanelDimensions): 
     overflow: hidden;
     text-overflow: ellipsis;
     font-weight: 500;
+}
+
+.heading-navigator-copy-button {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    right: 8px;
+    width: 28px;
+    height: 28px;
+    padding: 4px;
+    border: none;
+    border-radius: 4px;
+    background-color: ${theme.highlightBackground}40;
+    color: ${theme.foreground};
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 160ms ease-out, background-color 120ms ease-out, color 120ms ease-out;
+}
+
+.heading-navigator-copy-button svg {
+    width: 16px;
+    height: 16px;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 2;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+}
+
+.heading-navigator-item:hover .heading-navigator-copy-button,
+.heading-navigator-item:focus-within .heading-navigator-copy-button {
+    opacity: 1;
+    pointer-events: auto;
+}
+
+.heading-navigator-copy-button:hover,
+.heading-navigator-copy-button:focus-visible {
+    background-color: ${theme.highlightBackground};
+    color: ${theme.selectedForeground};
+}
+
+.heading-navigator-item.is-selected .heading-navigator-copy-button {
+    color: ${theme.selectedForeground};
+}
+
+.heading-navigator-copy-button.is-copied {
+    background-color: ${theme.highlightBackground};
+    color: ${theme.selectedForeground};
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 220ms ease-in 120ms, background-color 120ms ease-out, color 120ms ease-out;
+}
+
+.heading-navigator-copy-button.is-copied svg path:first-child {
+    display: none;
+}
+
+.heading-navigator-copy-button.is-copied svg path:last-child {
+    d: path('M20 6L9 17l-5-5');
+}
+
+.heading-navigator-item.is-selected .heading-navigator-copy-button.is-copied {
+    color: ${theme.selectedForeground};
 }
 
 .heading-navigator-empty {

@@ -1,6 +1,8 @@
 import { parser } from '@lezer/markdown';
 import logger from './logger';
 import { HeadingItem } from './types';
+// eslint-disable-next-line @typescript-eslint/no-require-imports
+const uslug = require('@joplin/fork-uslug');
 
 function parseHeadingLevel(nodeName: string): number | null {
     if (nodeName.startsWith('ATXHeading')) {
@@ -58,6 +60,17 @@ function normalizeHeadingText(nodeName: string, raw: string): string {
     return stripInlineMarkdown(raw.trim());
 }
 
+function createUniqueAnchor(text: string, fallback: string, counts: Map<string, number>): string {
+    const anchorBase = (typeof text === 'string' ? uslug(text) : '') || fallback;
+    const previousCount = counts.get(anchorBase);
+    if (previousCount === undefined) {
+        counts.set(anchorBase, 1);
+        return anchorBase;
+    }
+    counts.set(anchorBase, previousCount + 1);
+    return `${anchorBase}-${previousCount + 1}`;
+}
+
 function createLineResolver(content: string): (position: number) => number {
     const lineStartIndices: number[] = [0];
 
@@ -91,6 +104,7 @@ export function extractHeadings(content: string): HeadingItem[] {
         const tree = parser.parse(content);
         const headings: HeadingItem[] = [];
         const resolveLineNumber = createLineResolver(content);
+        const anchorCounts = new Map<string, number>();
 
         tree.iterate({
             enter(node) {
@@ -107,6 +121,8 @@ export function extractHeadings(content: string): HeadingItem[] {
                     return;
                 }
 
+                const anchor = createUniqueAnchor(text, `heading-${from}`, anchorCounts);
+
                 headings.push({
                     id: `heading-${from}`,
                     text,
@@ -114,6 +130,7 @@ export function extractHeadings(content: string): HeadingItem[] {
                     from,
                     to,
                     line: resolveLineNumber(from),
+                    anchor,
                 });
             },
         });

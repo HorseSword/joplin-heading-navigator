@@ -18,17 +18,19 @@
 - Owns the CodeMirror plugin wiring: registers `headingNavigator.togglePanel`, listens to doc/selection updates, and coordinates panel lifecycle.
 - Computes headings via `extractHeadings`, tracks the active heading, and keeps the editor selection in sync with panel navigation.
 - Delegates all DOM rendering to `HeadingPanel`, injects editor highlight decorations for the active heading, and ensures the panel opens/closes based on command toggles.
+- Uses the content script messaging bridge to ask the host process for clipboard writes when the panel copy control is clicked.
 - Navigation scrolls headings into view with CodeMirror’s `scrollIntoView` using `y: 'start'`, which keeps the heading pinned to the top of the editor. A short retry loop re-runs the scroll if late layout shifts (for example, rich Markdown images loading) nudge the heading out of view.
 - When the panel is closed with escape, the original selection and scroll position are restored via a snapshot taken when the panel opened, with a stored `scrollTop` fallback if geometry can’t be measured.
 
 ### Panel UI Modules
 
-- `src/contentScripts/ui/headingPanel.ts`: renders the floating panel DOM, wires keyboard/mouse interactions, manages filtering, and emits preview/select callbacks.
+- `src/contentScripts/ui/headingPanel.ts`: renders the floating panel DOM, wires keyboard/mouse interactions, manages filtering, and emits preview/select/copy callbacks. Each heading exposes a hover-only copy button that animates to a confirmation checkmark and fades out after copying.
 - `src/contentScripts/theme/panelTheme.ts`: derives theme-aware colors from the current editor styles and produces the CSS injected by `HeadingPanel`.
 
 ### Utilities & Data
 
 - `src/headingExtractor.ts`: wraps the Lezer Markdown parser to detect ATX/Setext headings, normalizes text, and records byte offsets + line numbers.
+- `src/messages.ts`: shared content-script → host message contracts (currently the copy-heading-link request).
 - `src/settings.ts`: registers plugin settings and normalizes values for the content script.
 - `src/panelDimensions.ts`: centralizes panel sizing defaults, normalization helpers, and min/max bounds shared between the plugin host and content script.
 - `src/types.ts`: defines shared DTOs (`HeadingItem`, `PanelDimensions`, `DEFAULT_PANEL_DIMENSIONS`) used by both plugin and editor bundles.
