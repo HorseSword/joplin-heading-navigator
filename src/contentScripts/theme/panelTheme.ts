@@ -1,4 +1,4 @@
-import { EditorView } from '@codemirror/view';
+﻿import { EditorView } from '@codemirror/view';
 import type { PanelDimensions } from '../../types';
 
 export interface RGBColor {
@@ -91,6 +91,7 @@ function parseColor(value: string | null | undefined): RGBColor | null {
     return parseHexColor(trimmed);
 }
 
+// Linear interpolation between base and other colors using the given weight.
 function mixColors(base: RGBColor, other: RGBColor, weight: number): RGBColor {
     return {
         r: base.r * (1 - weight) + other.r * weight,
