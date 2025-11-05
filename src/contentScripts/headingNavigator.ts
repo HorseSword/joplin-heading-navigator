@@ -10,7 +10,7 @@ import { normalizePanelDimensions } from '../panelDimensions';
 import logger from '../logger';
 
 const pendingScrollVerifications = new WeakMap<EditorView, number>();
-// Scroll verifier waits for layout to settle, then retries once for late content shifts.
+// Scroll verifier waits for layout to settle (160ms), then retries once more (260ms) if needed.
 const SCROLL_VERIFY_DELAY_MS = 160;
 const SCROLL_VERIFY_RETRY_DELAY_MS = 260;
 const SCROLL_VERIFY_TOLERANCE_PX = 12;
