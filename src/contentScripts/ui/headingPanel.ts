@@ -333,6 +333,12 @@ export class HeadingPanel {
             return;
         }
 
+        // Remove empty state node if it exists
+        const emptyNode = this.list.querySelector('.heading-navigator-empty');
+        if (emptyNode) {
+            emptyNode.remove();
+        }
+
         // Build a map of existing items
         const existingItems = new Map<string, HTMLLIElement>();
         this.list.querySelectorAll<HTMLLIElement>('.heading-navigator-item').forEach((item) => {
@@ -417,8 +423,14 @@ export class HeadingPanel {
         copyButton.addEventListener('click', (event) => {
             event.stopPropagation();
             event.preventDefault();
-            this.onCopy(heading);
-            this.showCopyFeedback(copyButton);
+
+            // Resolve current heading at click time to avoid stale closure
+            const currentHeading = this.headings.find((h) => h.id === heading.id);
+            if (currentHeading) {
+                this.onCopy(currentHeading);
+                this.showCopyFeedback(copyButton);
+            }
+
             copyButton.blur();
             this.input.focus();
         });
