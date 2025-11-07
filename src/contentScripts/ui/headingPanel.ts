@@ -324,9 +324,8 @@ export class HeadingPanel {
     }
 
     private render(): void {
-        this.list.innerHTML = '';
-
         if (!this.filtered.length) {
+            this.list.innerHTML = '';
             const empty = document.createElement('li');
             empty.className = 'heading-navigator-empty';
             empty.textContent = 'No headings found';
@@ -334,60 +333,122 @@ export class HeadingPanel {
             return;
         }
 
-        this.filtered.forEach((heading) => {
-            const item = document.createElement('li');
-            item.className = 'heading-navigator-item';
-            item.dataset.headingId = heading.id;
-            item.style.paddingLeft = `${INDENT_BASE_PX + (heading.level - 1) * INDENT_PER_LEVEL_PX}px`;
+        // Build a map of existing items
+        const existingItems = new Map<string, HTMLLIElement>();
+        this.list.querySelectorAll<HTMLLIElement>('.heading-navigator-item').forEach((item) => {
+            const id = item.dataset.headingId;
+            if (id) {
+                existingItems.set(id, item);
+            }
+        });
 
-            const level = document.createElement('span');
-            level.className = 'heading-navigator-item-level';
-            level.textContent = `H${heading.level} · line ${heading.line + 1}`;
+        // Remove items not in filtered list
+        const filteredIds = new Set(this.filtered.map((h) => h.id));
+        existingItems.forEach((item, id) => {
+            if (!filteredIds.has(id)) {
+                item.remove();
+                existingItems.delete(id);
+            }
+        });
 
-            const text = document.createElement('span');
-            text.className = 'heading-navigator-item-text';
-            text.textContent = heading.text;
+        // Update or create items in correct order
+        this.filtered.forEach((heading, index) => {
+            let item = existingItems.get(heading.id);
 
-            const copyButton = document.createElement('button');
-            copyButton.type = 'button';
-            copyButton.className = 'heading-navigator-copy-button';
-            copyButton.title = 'Copy heading link';
-            copyButton.setAttribute('aria-label', 'Copy heading link');
-
-            const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
-            svg.setAttribute('viewBox', '0 0 24 24');
-
-            const path1 = document.createElementNS('http://www.w3.org/2000/svg', 'path');
-            path1.setAttribute('d', 'M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71');
-
-            const path2 = document.createElementNS('http://www.w3.org/2000/svg', 'path');
-            path2.setAttribute('d', 'M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71');
-
-            svg.appendChild(path1);
-            svg.appendChild(path2);
-            copyButton.appendChild(svg);
-
-            copyButton.addEventListener('click', (event) => {
-                event.stopPropagation();
-                event.preventDefault();
-                this.onCopy(heading);
-                this.showCopyFeedback(copyButton);
-                copyButton.blur();
-                this.input.focus();
-            });
-
-            item.appendChild(level);
-            item.appendChild(text);
-            item.appendChild(copyButton);
-
-            if (heading.id === this.selectedHeadingId) {
-                item.classList.add('is-selected');
+            if (!item) {
+                // Create new item
+                item = this.createHeadingItem(heading);
+                existingItems.set(heading.id, item);
+            } else {
+                // Update existing item if needed
+                this.updateHeadingItem(item, heading);
             }
 
-            this.list.appendChild(item);
+            // Ensure correct order
+            const currentChild = this.list.children[index];
+            if (currentChild !== item) {
+                this.list.insertBefore(item, currentChild || null);
+            }
+
+            // Update selection state
+            if (heading.id === this.selectedHeadingId) {
+                item.classList.add('is-selected');
+            } else {
+                item.classList.remove('is-selected');
+            }
         });
 
         this.scrollActiveItemIntoView();
+    }
+
+    private createHeadingItem(heading: HeadingItem): HTMLLIElement {
+        const item = document.createElement('li');
+        item.className = 'heading-navigator-item';
+        item.dataset.headingId = heading.id;
+        item.style.paddingLeft = `${INDENT_BASE_PX + (heading.level - 1) * INDENT_PER_LEVEL_PX}px`;
+
+        const level = document.createElement('span');
+        level.className = 'heading-navigator-item-level';
+        level.textContent = `H${heading.level} · line ${heading.line + 1}`;
+
+        const text = document.createElement('span');
+        text.className = 'heading-navigator-item-text';
+        text.textContent = heading.text;
+
+        const copyButton = document.createElement('button');
+        copyButton.type = 'button';
+        copyButton.className = 'heading-navigator-copy-button';
+        copyButton.title = 'Copy heading link';
+        copyButton.setAttribute('aria-label', 'Copy heading link');
+
+        const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+        svg.setAttribute('viewBox', '0 0 24 24');
+
+        const path1 = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+        path1.setAttribute('d', 'M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71');
+
+        const path2 = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+        path2.setAttribute('d', 'M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71');
+
+        svg.appendChild(path1);
+        svg.appendChild(path2);
+        copyButton.appendChild(svg);
+
+        copyButton.addEventListener('click', (event) => {
+            event.stopPropagation();
+            event.preventDefault();
+            this.onCopy(heading);
+            this.showCopyFeedback(copyButton);
+            copyButton.blur();
+            this.input.focus();
+        });
+
+        item.appendChild(level);
+        item.appendChild(text);
+        item.appendChild(copyButton);
+
+        return item;
+    }
+
+    private updateHeadingItem(item: HTMLLIElement, heading: HeadingItem): void {
+        // Update padding if level changed
+        const newPadding = `${INDENT_BASE_PX + (heading.level - 1) * INDENT_PER_LEVEL_PX}px`;
+        if (item.style.paddingLeft !== newPadding) {
+            item.style.paddingLeft = newPadding;
+        }
+
+        // Update level text
+        const levelSpan = item.querySelector('.heading-navigator-item-level');
+        const newLevelText = `H${heading.level} · line ${heading.line + 1}`;
+        if (levelSpan && levelSpan.textContent !== newLevelText) {
+            levelSpan.textContent = newLevelText;
+        }
+
+        // Update heading text
+        const textSpan = item.querySelector('.heading-navigator-item-text');
+        if (textSpan && textSpan.textContent !== heading.text) {
+            textSpan.textContent = heading.text;
+        }
     }
 
     private updateSelection(): void {
