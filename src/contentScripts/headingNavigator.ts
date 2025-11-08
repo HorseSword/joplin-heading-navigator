@@ -9,7 +9,17 @@ import { HeadingPanel, type PanelCloseReason } from './ui/headingPanel';
 import { normalizePanelDimensions } from '../panelDimensions';
 import logger from '../logger';
 
-const pendingScrollVerifications = new WeakMap<EditorView, number>();
+// Track active verification timeouts per editor. WeakMap ensures automatic
+// cleanup when editor instances are destroyed (e.g., note close, plugin reload).
+const scrollVerificationTimeouts = new WeakMap<EditorView, number>();
+
+function cancelPendingVerification(view: EditorView): void {
+    const timeoutId = scrollVerificationTimeouts.get(view);
+    if (typeof timeoutId === 'number') {
+        window.clearTimeout(timeoutId);
+        scrollVerificationTimeouts.delete(view);
+    }
+}
 
 /**
  * Scroll Verification Constants
@@ -61,11 +71,11 @@ function planScrollVerification(view: EditorView, attempt: number, run: () => vo
     const delay = attempt === 0 ? SCROLL_VERIFY_DELAY_MS : SCROLL_VERIFY_RETRY_DELAY_MS;
 
     const timeoutId = window.setTimeout(() => {
-        pendingScrollVerifications.delete(view);
+        scrollVerificationTimeouts.delete(view);
         run();
     }, delay);
 
-    pendingScrollVerifications.set(view, timeoutId);
+    scrollVerificationTimeouts.set(view, timeoutId);
 }
 
 function ensureEditorFocus(view: EditorView, shouldFocus: boolean): void {
@@ -291,11 +301,7 @@ function setEditorSelection(view: EditorView, heading: HeadingItem, focusEditor:
     try {
         const targetSelection = EditorSelection.single(heading.from);
 
-        const pendingVerificationId = pendingScrollVerifications.get(view);
-        if (typeof pendingVerificationId === 'number') {
-            window.clearTimeout(pendingVerificationId);
-            pendingScrollVerifications.delete(view);
-        }
+        cancelPendingVerification(view);
 
         // Move the real selection so the caret and heading panel stay synchronized.
         // Rich Markdown reacts to this by rebuilding image widgets a moment later,
@@ -459,11 +465,7 @@ export default function headingNavigator(context: ContentScriptContext): Markdow
                 panel = null;
 
                 if (restoreOriginalPosition && initialSelectionRange) {
-                    const pendingVerificationId = pendingScrollVerifications.get(view);
-                    if (typeof pendingVerificationId === 'number') {
-                        window.clearTimeout(pendingVerificationId);
-                        pendingScrollVerifications.delete(view);
-                    }
+                    cancelPendingVerification(view);
 
                     try {
                         const selectionToRestore = EditorSelection.range(
