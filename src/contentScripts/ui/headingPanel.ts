@@ -189,6 +189,13 @@ export class HeadingPanel {
             clearTimeout(this.previewDebounceTimer);
             this.previewDebounceTimer = null;
         }
+        // Clear all copy animation timers to prevent callbacks from running after DOM removal
+        this.list.querySelectorAll<HTMLButtonElement>('.heading-navigator-copy-button').forEach((button) => {
+            const timerId = this.copyAnimationTimers.get(button);
+            if (typeof timerId === 'number') {
+                window.clearTimeout(timerId);
+            }
+        });
         if (this.container.parentElement) {
             this.container.parentElement.removeChild(this.container);
         }
