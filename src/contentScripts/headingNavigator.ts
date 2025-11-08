@@ -10,7 +10,32 @@ import { normalizePanelDimensions } from '../panelDimensions';
 import logger from '../logger';
 
 const pendingScrollVerifications = new WeakMap<EditorView, number>();
-// Scroll verifier waits for layout to settle (160ms), then retries once more (260ms) if needed.
+
+/**
+ * Scroll Verification Constants
+ *
+ * These values are tuned for reliable heading navigation in documents with dynamic content
+ * (images, rich markdown rendering, etc.) that can cause layout shifts after initial scroll.
+ *
+ * - SCROLL_VERIFY_DELAY_MS: Initial verification delay (~2 animation frames) to allow layout
+ *   to settle after the first scroll attempt. This handles most common cases where content
+ *   is still being measured/rendered.
+ *
+ * - SCROLL_VERIFY_RETRY_DELAY_MS: Second verification delay to guard against late layout
+ *   shifts (e.g., images loading asynchronously). Longer than initial delay to give more
+ *   time for deferred content to finish loading.
+ *
+ * - SCROLL_VERIFY_TOLERANCE_PX: Acceptable pixel distance below viewport top. Allows headings
+ *   to be slightly offset (up to 12px) without triggering re-scroll, reducing scroll jitter
+ *   for minor position variations.
+ *
+ * - SCROLL_VERIFY_NEGATIVE_TOLERANCE_PX: Stricter tolerance for content above viewport top
+ *   (1.5px vs 12px). Headings scrolled slightly past the top are more visually jarring than
+ *   those slightly below, so we re-scroll more aggressively in this case.
+ *
+ * - SCROLL_VERIFY_MAX_ATTEMPTS: Maximum verification attempts (2). Prevents infinite retry
+ *   loops while allowing one re-check for late shifts. More attempts add diminishing value.
+ */
 const SCROLL_VERIFY_DELAY_MS = 160;
 const SCROLL_VERIFY_RETRY_DELAY_MS = 260;
 const SCROLL_VERIFY_TOLERANCE_PX = 12;
@@ -51,6 +76,32 @@ function ensureEditorFocus(view: EditorView, shouldFocus: boolean): void {
     view.focus();
 }
 
+/**
+ * Creates a scroll verification function that ensures a heading stays pinned to the viewport top.
+ *
+ * Why retry logic is needed:
+ * In documents with dynamic content (images, rich markdown plugins, code blocks with syntax
+ * highlighting), the initial scrollIntoView call may execute before all content has finished
+ * rendering/measuring. This causes the target heading to shift position after scroll completes:
+ *
+ * 1. User navigates to heading
+ * 2. Initial scroll positions heading at top
+ * 3. Image below heading finishes loading (adds height)
+ * 4. Heading is pushed down, no longer visible at top
+ *
+ * The retry mechanism guards against these late layout shifts:
+ * - First verification (160ms): Checks position after most layout settles
+ * - Second verification (260ms): Guards against deferred content (lazy-loaded images, etc.)
+ * - Uses CodeMirror's requestMeasure to avoid layout thrashing
+ * - Aborts if user moves cursor (selection changed)
+ * - Stops after 2 attempts to prevent infinite loops
+ *
+ * @param options - Configuration for scroll verification
+ * @param options.view - CodeMirror editor view instance
+ * @param options.targetRange - Target selection range to verify (from/to positions)
+ * @param options.focusEditor - Whether to restore editor focus after verification
+ * @returns Verification function that accepts attempt number (0-based)
+ */
 function createScrollVerifier(options: {
     view: EditorView;
     targetRange: { from: number; to: number };
