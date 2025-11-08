@@ -39,7 +39,7 @@ function parseHexColor(value: string): RGBColor | null {
         if (Number.isNaN(r) || Number.isNaN(g) || Number.isNaN(b)) {
             return null;
         }
-        return { r: r ?? 0, g: g ?? 0, b: b ?? 0 };
+        return { r, g, b };
     }
     if (hex.length === 6) {
         const r = parseInt(hex.slice(0, 2), 16);
