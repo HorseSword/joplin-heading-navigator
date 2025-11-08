@@ -43,6 +43,20 @@ export function normalizePanelHeightRatio(raw: unknown): { value: number; change
     return { value: clamped, changed: clamped !== raw };
 }
 
+/**
+ * Normalizes and validates panel dimension settings.
+ *
+ * Ensures width and height ratio values are within acceptable ranges:
+ * - Width: 240-640 pixels (rounded to integer)
+ * - Height ratio: 0.40-0.90 (40%-90% of editor viewport)
+ *
+ * Invalid or missing values are replaced with defaults (320px width, 0.75 ratio).
+ * Used both when loading user settings and when receiving dimension updates from the plugin host.
+ *
+ * @param dimensions - Partial dimension configuration (may contain invalid or missing values)
+ * @returns Validated and normalized panel dimensions with all required fields
+ *
+ */
 export function normalizePanelDimensions(dimensions?: Partial<PanelDimensions>): PanelDimensions {
     const widthResult = normalizePanelWidth(dimensions?.width);
     const heightResult = normalizePanelHeightRatio(dimensions?.maxHeightRatio);

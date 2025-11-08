@@ -15,6 +15,32 @@ export interface PanelCallbacks {
     onCopy: (heading: HeadingItem) => void;
 }
 
+/**
+ * Floating panel UI for heading navigation with filtering, keyboard navigation, and copy functionality.
+ *
+ * Manages a filterable list of document headings with:
+ * - Real-time search filtering
+ * - Keyboard navigation (arrow keys, tab, enter, escape)
+ * - Mouse selection and hover interactions
+ * - Incremental DOM rendering for performance
+ * - Theme-aware styling derived from editor
+ * - Copy-to-clipboard for individual headings
+ *
+ * The panel uses incremental rendering to minimize DOM mutations when headings update.
+ * DOM nodes are reused when possible and only changed content is updated.
+ *
+ * @example
+ * ```typescript
+ * const panel = new HeadingPanel(editorView, {
+ *   onPreview: (heading) => scrollToHeading(heading),
+ *   onSelect: (heading) => { scrollToHeading(heading); panel.destroy(); },
+ *   onClose: (reason) => { restoreState(); panel.destroy(); },
+ *   onCopy: (heading) => copyHeadingLink(heading)
+ * }, dimensions);
+ *
+ * panel.open(headings, currentHeadingId);
+ * ```
+ */
 export class HeadingPanel {
     private readonly view: EditorView;
 
@@ -107,6 +133,15 @@ export class HeadingPanel {
         this.ownerDocument().addEventListener('mousedown', this.handleDocumentMouseDownListener, true);
     }
 
+    /**
+     * Opens the panel and displays the provided headings.
+     *
+     * Mounts the panel to the DOM, clears any previous filter state, and focuses the search input.
+     * The panel selects the heading matching `selectedId` if provided, otherwise selects the first heading.
+     *
+     * @param headings - Array of headings to display
+     * @param selectedId - ID of the heading to initially select (null for first heading)
+     */
     public open(headings: HeadingItem[], selectedId: string | null): void {
         this.mount();
         this.input.value = '';
@@ -120,6 +155,16 @@ export class HeadingPanel {
         });
     }
 
+    /**
+     * Updates the panel with new heading data while preserving UI state.
+     *
+     * Used when the document content changes while the panel is open. Preserves the current
+     * filter text by default, and uses incremental rendering to update only changed headings.
+     *
+     * @param headings - Updated array of headings
+     * @param selectedId - ID of the heading that should be selected (null to preserve current selection)
+     * @param preserveFilter - Whether to keep the current filter text (default: true)
+     */
     public update(headings: HeadingItem[], selectedId: string | null, preserveFilter = true): void {
         const filterText = preserveFilter ? this.input.value : '';
         if (!preserveFilter) {
@@ -129,6 +174,12 @@ export class HeadingPanel {
         this.setHeadings(headings, filterText, false);
     }
 
+    /**
+     * Removes the panel from the DOM and cleans up event listeners and timers.
+     *
+     * Must be called when the panel is no longer needed to prevent memory leaks.
+     * Safe to call multiple times.
+     */
     public destroy(): void {
         this.input.removeEventListener('input', this.handleInputListener);
         this.input.removeEventListener('keydown', this.handleKeyDownListener);
@@ -143,10 +194,23 @@ export class HeadingPanel {
         }
     }
 
+    /**
+     * Checks whether the panel is currently mounted in the DOM.
+     *
+     * @returns true if the panel is visible, false otherwise
+     */
     public isOpen(): boolean {
         return Boolean(this.container.parentElement);
     }
 
+    /**
+     * Updates the panel's dimensions and regenerates styles if needed.
+     *
+     * Triggers style regeneration only if dimensions actually changed, avoiding unnecessary
+     * CSS recalculation.
+     *
+     * @param options - New panel dimension configuration
+     */
     public setOptions(options: PanelDimensions): void {
         this.options = options;
         ensurePanelStyles(this.view, this.options);

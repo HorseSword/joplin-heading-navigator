@@ -101,6 +101,35 @@ function createLineResolver(content: string): (position: number) => number {
     };
 }
 
+/**
+ * Extracts heading information from Markdown content using the Lezer parser.
+ *
+ * Parses both ATX headings (e.g., `# Heading`) and Setext headings (e.g., underlined with `===` or `---`).
+ * The text is normalized by stripping inline Markdown formatting (bold, italic, links, images, code)
+ * while preserving the readable content.
+ *
+ * Each heading receives:
+ * - A stable ID based on byte position (`heading-{from}`)
+ * - A URL-friendly anchor slug (deduplicated if multiple headings have the same text)
+ * - Accurate line number and byte range
+ *
+ * @param content - Raw Markdown document content to parse
+ * @returns Array of heading items in document order, or empty array if parsing fails
+ *
+ * @example
+ * ```typescript
+ * const markdown = `# Introduction
+ * ## **Bold** Section
+ * ## Bold Section`;
+ *
+ * const headings = extractHeadings(markdown);
+ * // [
+ * //   { id: 'heading-0', text: 'Introduction', level: 1, anchor: 'introduction', line: 0, ... },
+ * //   { id: 'heading-16', text: 'Bold Section', level: 2, anchor: 'bold-section', line: 1, ... },
+ * //   { id: 'heading-37', text: 'Bold Section', level: 2, anchor: 'bold-section-2', line: 2, ... }
+ * // ]
+ * ```
+ */
 export function extractHeadings(content: string): HeadingItem[] {
     try {
         const tree = parser.parse(content);
