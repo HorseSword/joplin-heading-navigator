@@ -1,3 +1,21 @@
+/**
+ * Markdown heading extraction using the Lezer parser.
+ *
+ * Parses ATX (`# Heading`) and Setext (underlined) headings from markdown documents,
+ * strips inline formatting (bold, italic, links, code), and generates stable IDs and
+ * GitHub-compatible anchor slugs.
+ *
+ * Implementation details:
+ * - Uses Lezer AST parser (not regex) for reliable heading detection
+ * - Stable IDs based on byte position (`heading-{from}`)
+ * - Anchor deduplication (e.g., "intro" → "intro-2" → "intro-3")
+ * - Binary search for O(log n) line number lookup
+ * - Preserves snake_case in headings (doesn't break on underscores)
+ *
+ * @see stripInlineMarkdown - Regex patterns for removing markdown formatting
+ * @see createLineResolver - Binary search implementation for position → line mapping
+ */
+
 import { parser } from '@lezer/markdown';
 import logger from './logger';
 import { HeadingItem } from './types';
@@ -111,31 +129,18 @@ function createLineResolver(content: string): (position: number) => number {
 }
 
 /**
- * Extracts heading information from Markdown content using the Lezer parser.
+ * Extracts all headings from markdown content with normalized text and metadata.
  *
- * Parses both ATX headings (e.g., `# Heading`) and Setext headings (e.g., underlined with `===` or `---`).
- * The text is normalized by stripping inline Markdown formatting (bold, italic, links, images, code)
- * while preserving the readable content.
- *
- * Each heading receives:
- * - A stable ID based on byte position (`heading-{from}`)
- * - A URL-friendly anchor slug (deduplicated if multiple headings have the same text)
- * - Accurate line number and byte range
- *
- * @param content - Raw Markdown document content to parse
- * @returns Array of heading items in document order, or empty array if parsing fails
+ * @param content - Raw markdown document to parse
+ * @returns Array of headings in document order, or empty array if parsing fails
  *
  * @example
  * ```typescript
- * const markdown = `# Introduction
- * ## **Bold** Section
- * ## Bold Section`;
- *
- * const headings = extractHeadings(markdown);
+ * const headings = extractHeadings('# Introduction\n## **Bold** Section\n## Bold Section');
  * // [
- * //   { id: 'heading-0', text: 'Introduction', level: 1, anchor: 'introduction', line: 0, ... },
- * //   { id: 'heading-16', text: 'Bold Section', level: 2, anchor: 'bold-section', line: 1, ... },
- * //   { id: 'heading-37', text: 'Bold Section', level: 2, anchor: 'bold-section-2', line: 2, ... }
+ * //   { id: 'heading-0', text: 'Introduction', level: 1, anchor: 'introduction', ... },
+ * //   { id: 'heading-16', text: 'Bold Section', level: 2, anchor: 'bold-section', ... },
+ * //   { id: 'heading-37', text: 'Bold Section', level: 2, anchor: 'bold-section-2', ... }
  * // ]
  * ```
  */

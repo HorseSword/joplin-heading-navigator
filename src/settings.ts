@@ -1,3 +1,18 @@
+/**
+ * Joplin settings registration and loading for panel dimensions.
+ *
+ * Integrates panel dimension configuration into Joplin's preferences UI, allowing
+ * users to customize panel width and height through Settings > Heading Navigator.
+ *
+ * Settings are:
+ * - Stored by Joplin across sessions (persisted to disk)
+ * - Validated on load with fallback to defaults if corrupted/out-of-range
+ * - Loaded on-demand when the panel opens (not cached in memory)
+ *
+ * @see panelDimensions.ts - Validation and normalization utilities
+ * @see index.ts - Calls registerPanelSettings() on plugin startup
+ */
+
 import joplin from 'api';
 import { SettingItemType } from 'api/types';
 import logger from './logger';

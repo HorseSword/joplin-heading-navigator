@@ -1,4 +1,24 @@
-﻿import { EditorView } from '@codemirror/view';
+﻿/**
+ * Theme derivation for the heading navigator panel.
+ *
+ * Automatically generates a cohesive color palette by analyzing the CodeMirror editor's
+ * current theme (Joplin CSS variables, computed styles). The panel visually integrates
+ * with the editor while maintaining sufficient contrast for readability.
+ *
+ * Key techniques:
+ * - WCAG 2.1 relative luminance for light/dark mode detection
+ * - Controlled color mixing (white/black blending at specific percentages)
+ * - Fallback chains for theme color resolution (CSS vars → editor styles → body styles)
+ * - Theme-aware scrollbars and signature-based CSS caching
+ *
+ * Color derivation uses asymmetric mixing ratios: dark themes need higher contrast
+ * (8% vs 3% for backgrounds) to maintain visual separation.
+ *
+ * @see createPanelTheme - Main theme generation function with derivation algorithm
+ * @see relativeLuminance - WCAG 2.1 luminance calculation for mode detection
+ */
+
+import { EditorView } from '@codemirror/view';
 import type { PanelDimensions } from '../../types';
 
 export interface RGBColor {
@@ -123,40 +143,13 @@ function resolveColorFromStyles(candidates: (string | null | undefined)[], fallb
 }
 
 /**
- * Creates a theme-aware color palette for the heading navigator panel.
+ * Derives a complete color palette from the editor's current theme.
  *
- * Derives colors from the CodeMirror editor's current theme by:
- * 1. Reading Joplin CSS variables, editor styles, and DOM computed styles
- * 2. Detecting light vs dark mode based on background luminance
- * 3. Generating a cohesive color scheme by mixing base colors with white/black
- *
- * The algorithm ensures the panel visually integrates with the editor while maintaining
- * sufficient contrast for readability. All derived colors use relative luminance
- * calculations and controlled color mixing to preserve theme consistency.
- *
- * Color derivation strategy:
- * - Panel background: Slightly lighter/darker than editor background (8% white for dark, 3% black for light)
- * - Borders/dividers: Subtle contrast against panel background (18% white for dark, 10% black for light)
- * - Muted text: Blended foreground/background (45% mix for dark, 35% for light)
- * - Selection: Higher contrast background (16% white for dark, 12% black for light)
- * - Scrollbar: Subtle visibility with hover state for better discoverability
+ * Extracts base colors from Joplin CSS variables and computed styles, detects light/dark
+ * mode via luminance, then generates all panel colors using controlled mixing ratios.
  *
  * @param view - CodeMirror editor view to extract theme colors from
  * @returns Complete theme object with all panel colors as hex strings
- *
- * @example
- * ```typescript
- * const theme = createPanelTheme(editorView);
- * // Dark theme example output:
- * // {
- * //   background: '#2b2d31',
- * //   foreground: '#dcddde',
- * //   border: '#3f4147',
- * //   selectedBackground: '#383a40',
- * //   selectedForeground: '#ffffff',
- * //   ...
- * // }
- * ```
  */
 export function createPanelTheme(view: EditorView): PanelTheme {
     const doc = view.dom.ownerDocument ?? document;

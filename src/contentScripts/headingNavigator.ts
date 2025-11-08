@@ -1,4 +1,29 @@
-﻿import { EditorSelection, EditorState } from '@codemirror/state';
+﻿/**
+ * Heading Navigator content script for CodeMirror 6 integration.
+ *
+ * This file runs in the CodeMirror editor context with direct access to the editor DOM and state,
+ * but without access to Joplin APIs (clipboard, data store, etc.). It:
+ * - Integrates with CodeMirror 6 as a plugin extension
+ * - Manages the floating heading panel UI lifecycle
+ * - Handles editor state changes (document edits, cursor movement)
+ * - Implements scroll verification for reliable heading navigation with dynamic content
+ * - Sends messages to the plugin host for privileged operations (clipboard, note data)
+ *
+ * Architecture:
+ * - Content script (this file): Has CodeMirror access, manages editor UI, limited API access
+ * - Plugin host (index.ts): Has Joplin API access, handles clipboard/data operations
+ * - Communication: Content script → plugin host via postMessage bridge (see messages.ts)
+ *
+ * Key challenge: Documents with dynamic content (images, rich markdown) cause layout shifts
+ * after initial scroll. The scroll verification system uses retry logic to
+ * ensure headings stay pinned to the viewport top despite these shifts.
+ *
+ * @see index.ts - Plugin host that receives messages from this content script
+ * @see messages.ts - Message protocol definitions
+ * @see ui/headingPanel.ts - Floating panel UI implementation
+ */
+
+import { EditorSelection, EditorState } from '@codemirror/state';
 import { EditorView, ViewUpdate } from '@codemirror/view';
 import type { CodeMirrorControl, ContentScriptContext, MarkdownEditorContentScriptModule } from 'api/types';
 import { EDITOR_COMMAND_TOGGLE_PANEL } from '../constants';
@@ -24,27 +49,13 @@ function cancelPendingVerification(view: EditorView): void {
 /**
  * Scroll Verification Constants
  *
- * These values are tuned for reliable heading navigation in documents with dynamic content
- * (images, rich markdown rendering, etc.) that can cause layout shifts after initial scroll.
+ * Tuned timing and tolerance values for the scroll verification retry system.
  *
- * - SCROLL_VERIFY_DELAY_MS: Initial verification delay (~2 animation frames) to allow layout
- *   to settle after the first scroll attempt. This handles most common cases where content
- *   is still being measured/rendered.
- *
- * - SCROLL_VERIFY_RETRY_DELAY_MS: Second verification delay to guard against late layout
- *   shifts (e.g., images loading asynchronously). Longer than initial delay to give more
- *   time for deferred content to finish loading.
- *
- * - SCROLL_VERIFY_TOLERANCE_PX: Acceptable pixel distance below viewport top. Allows headings
- *   to be slightly offset (up to 12px) without triggering re-scroll, reducing scroll jitter
- *   for minor position variations.
- *
- * - SCROLL_VERIFY_NEGATIVE_TOLERANCE_PX: Stricter tolerance for content above viewport top
- *   (1.5px vs 12px). Headings scrolled slightly past the top are more visually jarring than
- *   those slightly below, so we re-scroll more aggressively in this case.
- *
- * - SCROLL_VERIFY_MAX_ATTEMPTS: Maximum verification attempts (2). Prevents infinite retry
- *   loops while allowing one re-check for late shifts. More attempts add diminishing value.
+ * - SCROLL_VERIFY_DELAY_MS: Initial verification delay (~2 animation frames)
+ * - SCROLL_VERIFY_RETRY_DELAY_MS: Second verification delay (guards against late shifts)
+ * - SCROLL_VERIFY_TOLERANCE_PX: Acceptable offset below viewport top (12px)
+ * - SCROLL_VERIFY_NEGATIVE_TOLERANCE_PX: Stricter tolerance above viewport top (1.5px)
+ * - SCROLL_VERIFY_MAX_ATTEMPTS: Maximum retry attempts (2)
  */
 const SCROLL_VERIFY_DELAY_MS = 160;
 const SCROLL_VERIFY_RETRY_DELAY_MS = 260;
@@ -90,21 +101,10 @@ function ensureEditorFocus(view: EditorView, shouldFocus: boolean): void {
  * Creates a scroll verification function that ensures a heading stays pinned to the viewport top.
  *
  * Why retry logic is needed:
- * In documents with dynamic content (images, rich markdown plugins, code blocks with syntax
- * highlighting), the initial scrollIntoView call may execute before all content has finished
- * rendering/measuring. This causes the target heading to shift position after scroll completes:
- *
- * 1. User navigates to heading
- * 2. Initial scroll positions heading at top
- * 3. Image below heading finishes loading (adds height)
- * 4. Heading is pushed down, no longer visible at top
- *
- * The retry mechanism guards against these late layout shifts:
- * - First verification (160ms): Checks position after most layout settles
- * - Second verification (260ms): Guards against deferred content (lazy-loaded images, etc.)
- * - Uses CodeMirror's requestMeasure to avoid layout thrashing
- * - Aborts if user moves cursor (selection changed)
- * - Stops after 2 attempts to prevent infinite loops
+ * - Dynamic content (images, code blocks) may finish rendering after initial scroll
+ * - Late layout shifts push the heading out of view despite successful scrollIntoView
+ * - Two-phase verification (160ms, 260ms) catches both immediate and deferred shifts
+ * - Aborts if user moves cursor or after 2 attempts to prevent infinite loops
  *
  * @param options - Configuration for scroll verification
  * @param options.view - CodeMirror editor view instance

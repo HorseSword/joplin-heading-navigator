@@ -1,3 +1,21 @@
+/**
+ * Heading Navigator plugin entry point and host orchestrator.
+ *
+ * This file runs in the Joplin plugin host context with full API access. It:
+ * - Registers the CodeMirror content script (runs in editor context)
+ * - Handles messages from the content script (clipboard operations, data fetching)
+ * - Registers commands, menu items, and toolbar buttons
+ * - Manages plugin settings and configuration
+ *
+ * Architecture:
+ * - Plugin host (this file): Has Joplin API access, handles privileged operations
+ * - Content script (headingNavigator.ts): Runs in editor, has CodeMirror access but no Joplin API
+ * - Communication: Content script → plugin host via postMessage bridge
+ *
+ * @see contentScripts/headingNavigator.ts - Content script that sends messages to this host
+ * @see messages.ts - Message protocol definitions
+ */
+
 import joplin from 'api';
 import { ContentScriptType, MenuItemLocation, ToolbarButtonLocation } from 'api/types';
 import { CODEMIRROR_CONTENT_SCRIPT_ID, COMMAND_GO_TO_HEADING, EDITOR_COMMAND_TOGGLE_PANEL } from './constants';

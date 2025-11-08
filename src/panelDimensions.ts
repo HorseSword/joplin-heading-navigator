@@ -1,3 +1,14 @@
+/**
+ * Panel dimension validation and normalization utilities.
+ *
+ * Enforces min/max constraints on panel dimensions to ensure usability:
+ * - Width: 240-640px (too narrow = unusable, too wide = blocks editor)
+ * - Height: 40-90% of viewport (too short = not enough headings visible, too tall = blocks content)
+ *
+ * User settings from plugin configuration are untrusted and must be validated
+ * before being applied to the UI. Invalid values fall back to defaults (320px × 75%).
+ */
+
 import type { PanelDimensions } from './types';
 import { DEFAULT_PANEL_DIMENSIONS } from './types';
 
@@ -46,16 +57,12 @@ export function normalizePanelHeightRatio(raw: unknown): { value: number; change
 /**
  * Normalizes and validates panel dimension settings.
  *
- * Ensures width and height ratio values are within acceptable ranges:
- * - Width: 240-640 pixels (rounded to integer)
- * - Height ratio: 0.40-0.90 (40%-90% of editor viewport)
- *
- * Invalid or missing values are replaced with defaults (320px width, 0.75 ratio).
- * Used both when loading user settings and when receiving dimension updates from the plugin host.
+ * Clamps values to acceptable ranges, rounds width to integer, and replaces
+ * invalid/missing values with defaults. Used when loading user settings and
+ * receiving dimension updates from the plugin host.
  *
  * @param dimensions - Partial dimension configuration (may contain invalid or missing values)
  * @returns Validated and normalized panel dimensions with all required fields
- *
  */
 export function normalizePanelDimensions(dimensions?: Partial<PanelDimensions>): PanelDimensions {
     const widthResult = normalizePanelWidth(dimensions?.width);
