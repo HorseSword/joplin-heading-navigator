@@ -172,4 +172,81 @@ describe('extractHeadings', () => {
         expect(headings[0].text).toBe('This is italic text with snake_case');
         expect(headings[1].text).toBe('Entire heading italic');
     });
+
+    it('strips inline markdown formatting while preserving text', () => {
+        const content = `# **Bold** Heading
+## *Italic* Text
+### \`code\` section
+#### [Link Text](https://example.com)
+##### ![Alt Text](image.png)`;
+        const headings = extractHeadings(content);
+
+        expect(headings[0].text).toBe('Bold Heading');
+        expect(headings[1].text).toBe('Italic Text');
+        expect(headings[2].text).toBe('code section');
+        expect(headings[3].text).toBe('Link Text');
+        expect(headings[4].text).toBe('Alt Text');
+    });
+
+    it('handles nested and mixed inline formatting', () => {
+        const content = `# **_Bold and Italic_** Text
+## [**Bold Link**](url)
+### \`code with_underscore\``;
+        const headings = extractHeadings(content);
+
+        expect(headings[0].text).toBe('Bold and Italic Text');
+        expect(headings[1].text).toBe('Bold Link');
+        expect(headings[2].text).toBe('code with_underscore');
+    });
+
+    it('handles escaped characters in headings', () => {
+        const content = `# Escaped \\* asterisk
+## Escaped \\_ underscore
+### Escaped \\# hash`;
+        const headings = extractHeadings(content);
+
+        expect(headings[0].text).toBe('Escaped * asterisk');
+        expect(headings[1].text).toBe('Escaped _ underscore');
+        expect(headings[2].text).toBe('Escaped # hash');
+    });
+
+    it('handles double underscores as bold markdown (matches Joplin rendering)', () => {
+        const content = `# Using __init__.py files
+## The __name__ variable
+### file_name_with_many_underscores`;
+        const headings = extractHeadings(content);
+
+        // Note: __text__ is treated as bold per markdown-it (used by Joplin),
+        // so we strip the underscores to match what users see in the rendered note.
+        // This behavior is consistent with Joplin's markdown viewer and other plugins.
+        // While CommonMark has nuanced rules, we mirror Joplin's actual rendering.
+        expect(headings[0].text).toBe('Using init.py files');
+        expect(headings[1].text).toBe('The name variable');
+        expect(headings[2].text).toBe('file_name_with_many_underscores');
+    });
+
+    it('collapses whitespace after stripping formatting', () => {
+        const content = `# Multiple    spaces    preserved
+## Text  with  **bold**  gaps`;
+        const headings = extractHeadings(content);
+
+        expect(headings[0].text).toBe('Multiple spaces preserved');
+        expect(headings[1].text).toBe('Text with bold gaps');
+    });
+
+    it('handles reference-style links', () => {
+        const content = `# [Reference Link][ref]
+## [Another][1]`;
+        const headings = extractHeadings(content);
+
+        expect(headings[0].text).toBe('Reference Link');
+        expect(headings[1].text).toBe('Another');
+    });
+
+    it('handles images without alt text', () => {
+        const content = '# ![](image.png) Icon';
+        const headings = extractHeadings(content);
+
+        expect(headings[0].text).toBe('Icon');
+    });
 });

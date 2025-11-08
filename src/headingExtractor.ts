@@ -24,19 +24,28 @@ function stripInlineMarkdown(text: string): string {
     return (
         text
             // Inline images: keep alt text if present.
+            // Example: "![alt text](image.png)" → "alt text"
             .replace(/!\[([^\]]*)\]\([^)]+\)/g, '$1')
             // Inline and reference links: keep link label only.
+            // Example: "[link text](url)" → "link text"
             .replace(/\[([^\]]*?)\]\s*(\([^)]+\)|\[[^\]]*\])/g, '$1')
             // Bold/italic markers.
+            // Example: "**bold**" → "bold", "*italic*" → "italic"
             .replace(/\*\*([^*]+)\*\*/g, '$1')
             .replace(/__([^_]+)__/g, '$1')
             .replace(/\*([^*]+)\*/g, '$1')
-            // Only remove underscores if they wrap a word with whitespace or start/end boundaries
-            // Use lookahead/lookbehind to preserve surrounding whitespace
+            // Only remove underscores if they wrap a word with whitespace or start/end boundaries.
+            // Use lookahead/lookbehind to preserve surrounding whitespace.
+            // Matches: "_emphasized_" → "emphasized"
+            // Matches: "start _word_ end" → "start word end"
+            // Preserves: "snake_case_var" (no surrounding whitespace)
+            // Preserves: "file_name_here" (multiple underscores)
             .replace(/(?<=^|\s)_([^\s_][^_]*[^\s_]|[^\s_])_(?=\s|$)/g, '$1')
             // Inline code.
+            // Example: "`code`" → "code"
             .replace(/`([^`]+)`/g, '$1')
             // Escaped characters.
+            // Example: "\*" → "*", "\_" → "_"
             .replace(/\\([\\`*_{}\[\]()#+\-.!])/g, '$1')
             // Collapse repeated whitespace.
             .replace(/\s+/g, ' ')
