@@ -27,9 +27,6 @@ export interface PanelCallbacks {
  * - Theme-aware styling derived from editor
  * - Copy-to-clipboard for individual headings
  *
- * The panel uses incremental rendering to minimize DOM mutations when headings update.
- * DOM nodes are reused when possible and only changed content is updated.
- *
  * @example
  * ```typescript
  * const panel = new HeadingPanel(editorView, {

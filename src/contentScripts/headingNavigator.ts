@@ -347,13 +347,6 @@ function setEditorSelection(view: EditorView, heading: HeadingItem, focusEditor:
  * 3. Handles the `headingNavigator.togglePanel` command from the plugin host
  * 4. Manages panel lifecycle and dimension updates
  *
- * Panel interactions:
- * - Arrow keys/Tab: Navigate between headings with live preview
- * - Enter: Jump to selected heading and close panel
- * - Escape: Close panel and restore original position
- * - Click outside: Close panel and keep current position
- * - Hover copy button: Copy heading link (requires note ID from Joplin)
- *
  * @param context - Content script context for messaging with plugin host
  * @returns CodeMirror content script module with plugin factory
  */
