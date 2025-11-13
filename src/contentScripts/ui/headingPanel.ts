@@ -1,6 +1,7 @@
 import { EditorView } from '@codemirror/view';
 import type { HeadingItem, PanelDimensions } from '../../types';
 import { createPanelCss, createPanelTheme } from '../theme/panelTheme';
+import { CopyButtonController } from './copyButtonController';
 
 const PANEL_STYLE_ID = 'heading-navigator-styles';
 const INDENT_BASE_PX = 12;
@@ -78,7 +79,7 @@ export class HeadingPanel {
 
     private readonly handleDocumentMouseDownListener: (event: MouseEvent) => void;
 
-    private readonly copyAnimationTimers = new WeakMap<HTMLButtonElement, number>();
+    private readonly copyButtonController = new CopyButtonController();
 
     public constructor(view: EditorView, callbacks: PanelCallbacks, options: PanelDimensions) {
         this.view = view;
@@ -189,13 +190,7 @@ export class HeadingPanel {
             clearTimeout(this.previewDebounceTimer);
             this.previewDebounceTimer = null;
         }
-        // Clear all copy animation timers to prevent callbacks from running after DOM removal
-        this.list.querySelectorAll<HTMLButtonElement>('.heading-navigator-copy-button').forEach((button) => {
-            const timerId = this.copyAnimationTimers.get(button);
-            if (typeof timerId === 'number') {
-                window.clearTimeout(timerId);
-            }
-        });
+        this.copyButtonController.destroy(this.list);
         if (this.container.parentElement) {
             this.container.parentElement.removeChild(this.container);
         }
@@ -396,14 +391,39 @@ export class HeadingPanel {
 
     private render(): void {
         if (!this.filtered.length) {
-            this.list.innerHTML = '';
-            const empty = document.createElement('li');
-            empty.className = 'heading-navigator-empty';
-            empty.textContent = 'No headings found';
-            this.list.appendChild(empty);
+            this.renderEmptyState();
             return;
         }
 
+        this.reconcileItems();
+        this.scrollActiveItemIntoView();
+    }
+
+    /**
+     * Renders the empty state when no headings match the current filter.
+     *
+     * Clears the list and displays a "No headings found" message.
+     */
+    private renderEmptyState(): void {
+        this.list.innerHTML = '';
+        const empty = document.createElement('li');
+        empty.className = 'heading-navigator-empty';
+        empty.textContent = 'No headings found';
+        this.list.appendChild(empty);
+    }
+
+    /**
+     * Performs efficient keyed DOM reconciliation for heading items.
+     *
+     * Updates the DOM to match the filtered headings list by:
+     * - Removing empty state node if present
+     * - Reusing existing DOM nodes where possible
+     * - Creating new nodes for new headings
+     * - Updating changed content
+     * - Maintaining correct order
+     * - Updating selection state
+     */
+    private reconcileItems(): void {
         // Remove empty state node if it exists
         const emptyNode = this.list.querySelector('.heading-navigator-empty');
         if (emptyNode) {
@@ -454,8 +474,6 @@ export class HeadingPanel {
                 item.classList.remove('is-selected');
             }
         });
-
-        this.scrollActiveItemIntoView();
     }
 
     private createHeadingItem(heading: HeadingItem): HTMLLIElement {
@@ -472,39 +490,19 @@ export class HeadingPanel {
         text.className = 'heading-navigator-item-text';
         text.textContent = heading.text;
 
-        const copyButton = document.createElement('button');
-        copyButton.type = 'button';
-        copyButton.className = 'heading-navigator-copy-button';
-        copyButton.title = 'Copy heading link';
-        copyButton.setAttribute('aria-label', 'Copy heading link');
-
-        const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
-        svg.setAttribute('viewBox', '0 0 24 24');
-
-        const path1 = document.createElementNS('http://www.w3.org/2000/svg', 'path');
-        path1.setAttribute('d', 'M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71');
-
-        const path2 = document.createElementNS('http://www.w3.org/2000/svg', 'path');
-        path2.setAttribute('d', 'M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71');
-
-        svg.appendChild(path1);
-        svg.appendChild(path2);
-        copyButton.appendChild(svg);
-
-        copyButton.addEventListener('click', (event) => {
-            event.stopPropagation();
-            event.preventDefault();
-
-            // Resolve current heading at click time to avoid stale closure
-            const currentHeading = this.headings.find((h) => h.id === heading.id);
-            if (currentHeading) {
-                this.onCopy(currentHeading);
-                this.showCopyFeedback(copyButton);
+        // Resolve current heading at click time to avoid stale closure
+        const copyButton = this.copyButtonController.createCopyButton(
+            heading,
+            (h) => {
+                const currentHeading = this.headings.find((item) => item.id === h.id);
+                if (currentHeading) {
+                    this.onCopy(currentHeading);
+                }
+            },
+            () => {
+                this.input.focus();
             }
-
-            copyButton.blur();
-            this.input.focus();
-        });
+        );
 
         item.appendChild(level);
         item.appendChild(text);
@@ -548,22 +546,6 @@ export class HeadingPanel {
     private scrollActiveItemIntoView(): void {
         const activeItem = this.list.querySelector<HTMLLIElement>('.heading-navigator-item.is-selected');
         activeItem?.scrollIntoView({ block: 'nearest' });
-    }
-
-    private showCopyFeedback(button: HTMLButtonElement): void {
-        const existingTimer = this.copyAnimationTimers.get(button);
-        if (typeof existingTimer === 'number') {
-            window.clearTimeout(existingTimer);
-        }
-
-        button.classList.add('is-copied');
-
-        const timerId = window.setTimeout(() => {
-            button.classList.remove('is-copied');
-            this.copyAnimationTimers.delete(button);
-        }, 600);
-
-        this.copyAnimationTimers.set(button, timerId);
     }
 }
 
