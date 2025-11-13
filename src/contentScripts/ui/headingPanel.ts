@@ -549,17 +549,9 @@ export class HeadingPanel {
 function ensurePanelStyles(view: EditorView, options: PanelDimensions): void {
     const doc = view.dom.ownerDocument ?? document;
     const theme = createPanelTheme(view);
-    const signature = [
-        theme.background,
-        theme.foreground,
-        theme.border,
-        theme.divider,
-        theme.muted,
-        theme.selectedBackground,
-        theme.selectedForeground,
-        options.width.toString(),
-        options.maxHeightRatio.toFixed(4),
-    ].join('|');
+    // Use Object.values to automatically include all theme fields in signature,
+    // preventing cache misses when any theme property changes
+    const signature = [...Object.values(theme), options.width.toString(), options.maxHeightRatio.toFixed(4)].join('|');
 
     let style = doc.getElementById(PANEL_STYLE_ID) as HTMLStyleElement | null;
     if (!style) {
