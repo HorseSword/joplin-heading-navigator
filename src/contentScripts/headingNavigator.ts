@@ -366,7 +366,6 @@ export default function headingNavigator(context: ContentScriptContext): Markdow
             const view = editorControl.editor as EditorView;
             let panel: HeadingPanel | null = null;
             let headings: HeadingItem[] = [];
-            let selectedHeadingId: string | null = null;
             let panelDimensions: PanelDimensions = normalizePanelDimensions();
             let initialSelectionRange: { from: number; to: number } | null = null;
             let initialScrollSnapshot: ReturnType<EditorView['scrollSnapshot']> | null = null;
@@ -418,11 +417,9 @@ export default function headingNavigator(context: ContentScriptContext): Markdow
                         view,
                         {
                             onPreview: (heading) => {
-                                selectedHeadingId = heading.id;
                                 setEditorSelection(view, heading, false);
                             },
                             onSelect: (heading) => {
-                                selectedHeadingId = heading.id;
                                 setEditorSelection(view, heading, true);
                                 closePanel(true);
                             },
@@ -430,7 +427,6 @@ export default function headingNavigator(context: ContentScriptContext): Markdow
                                 closePanel(true, reason === 'escape');
                             },
                             onCopy: (heading) => {
-                                selectedHeadingId = heading.id;
                                 void sendCopyRequest(heading);
                             },
                         },
@@ -443,12 +439,12 @@ export default function headingNavigator(context: ContentScriptContext): Markdow
 
             const openPanel = (): void => {
                 headings = computeHeadings(view.state);
-                selectedHeadingId = findActiveHeadingId(headings, view.state.selection.main.head);
+                const activeHeadingId = findActiveHeadingId(headings, view.state.selection.main.head);
                 const selection = view.state.selection.main;
                 initialSelectionRange = { from: selection.from, to: selection.to };
                 initialScrollSnapshot = view.scrollSnapshot();
 
-                ensurePanel().open(headings, selectedHeadingId);
+                ensurePanel().open(headings, activeHeadingId);
             };
 
             const updatePanel = (): void => {
@@ -456,8 +452,8 @@ export default function headingNavigator(context: ContentScriptContext): Markdow
                     return;
                 }
 
-                selectedHeadingId = findActiveHeadingId(headings, view.state.selection.main.head);
-                panel.update(headings, selectedHeadingId);
+                const activeHeadingId = findActiveHeadingId(headings, view.state.selection.main.head);
+                panel.update(headings, activeHeadingId);
             };
 
             const closePanel = (focusEditor = false, restoreOriginalPosition = false): void => {
