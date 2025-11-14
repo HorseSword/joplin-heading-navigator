@@ -52,8 +52,6 @@ function stripInlineMarkdown(text: string): string {
             .replace(/\*\*([^*]+)\*\*/g, '$1')
             .replace(/__([^_]+)__/g, '$1')
             .replace(/\*([^*]+)\*/g, '$1')
-            // Only remove underscores if they wrap a word with whitespace or start/end boundaries.
-            // Use lookahead/lookbehind to preserve surrounding whitespace.
             // Matches: "_emphasized_" → "emphasized"
             // Matches: "start _word_ end" → "start word end"
             // Preserves: "snake_case_var" (no surrounding whitespace)
