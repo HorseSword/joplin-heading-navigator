@@ -9,14 +9,14 @@
  * - Uses Lezer AST parser (not regex) for reliable heading detection
  * - Stable IDs based on byte position (`heading-{from}`)
  * - Anchor deduplication (e.g., "intro" → "intro-2" → "intro-3")
- * - Binary search for O(log n) line number lookup
+ * - CodeMirror Text class for efficient position → line number conversion
  * - Preserves snake_case in headings (doesn't break on underscores)
  *
  * @see stripInlineMarkdown - Regex patterns for removing markdown formatting
- * @see createLineResolver - Binary search implementation for position → line mapping
  */
 
 import { parser } from '@lezer/markdown';
+import { Text } from '@codemirror/state';
 import logger from './logger';
 import { HeadingItem } from './types';
 // eslint-disable-next-line @typescript-eslint/no-require-imports
@@ -100,34 +100,6 @@ function createUniqueAnchor(text: string, fallback: string, counts: Map<string, 
     return `${anchorBase}-${previousCount + 1}`;
 }
 
-function createLineResolver(content: string): (position: number) => number {
-    const lineStartIndices: number[] = [0];
-
-    for (let index = 0; index < content.length; index += 1) {
-        if (content[index] === '\n') {
-            lineStartIndices.push(index + 1);
-        }
-    }
-
-    return (position: number): number => {
-        let low = 0;
-        let high = lineStartIndices.length - 1;
-        let result = 0;
-
-        while (low <= high) {
-            const mid = Math.floor((low + high) / 2);
-            if (lineStartIndices[mid] <= position) {
-                result = mid;
-                low = mid + 1;
-            } else {
-                high = mid - 1;
-            }
-        }
-
-        return result;
-    };
-}
-
 /**
  * Extracts all headings from markdown content with normalized text and metadata.
  *
@@ -147,8 +119,8 @@ function createLineResolver(content: string): (position: number) => number {
 export function extractHeadings(content: string): HeadingItem[] {
     try {
         const tree = parser.parse(content);
+        const doc = Text.of(content.split('\n'));
         const headings: HeadingItem[] = [];
-        const resolveLineNumber = createLineResolver(content);
         const anchorCounts = new Map<string, number>();
 
         tree.iterate({
@@ -174,7 +146,7 @@ export function extractHeadings(content: string): HeadingItem[] {
                     level,
                     from,
                     to,
-                    line: resolveLineNumber(from),
+                    line: doc.lineAt(from).number - 1,
                     anchor,
                 });
             },
