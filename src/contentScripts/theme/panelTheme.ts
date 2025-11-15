@@ -8,6 +8,9 @@
 
 import type { PanelDimensions } from '../../types';
 
+const SEARCH_CANCEL_MASK_DATA_URI =
+    "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12'%3E%3Cpath d='M2 2l8 8m0-8L2 10' fill='none' stroke='white' stroke-width='1.8' stroke-linecap='round'/%3E%3C/svg%3E";
+
 function formatPanelWidth(width: number): string {
     return `${Math.round(width)}px`;
 }
@@ -59,14 +62,14 @@ export function createPanelCss(dimensions: PanelDimensions): string {
     height: 16px;
     width: 16px;
     border-radius: 50%;
-    color: var(--joplin-color, #7c8b9e);
+    color: var(--joplin-color, #32373f);
     cursor: pointer;
     opacity: 0.75;
     transition: opacity 120ms ease-out;
     /* Render X icon via mask so it inherits currentColor */
     background-color: currentColor;
-    -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12'%3E%3Cpath d='M2 2l8 8m0-8L2 10' fill='none' stroke='white' stroke-width='1.8' stroke-linecap='round'/%3E%3C/svg%3E");
-    mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12'%3E%3Cpath d='M2 2l8 8m0-8L2 10' fill='none' stroke='white' stroke-width='1.8' stroke-linecap='round'/%3E%3C/svg%3E");
+    -webkit-mask-image: url("${SEARCH_CANCEL_MASK_DATA_URI}");
+    mask-image: url("${SEARCH_CANCEL_MASK_DATA_URI}");
     -webkit-mask-repeat: no-repeat;
     mask-repeat: no-repeat;
     -webkit-mask-position: center;
