@@ -74,6 +74,8 @@ export class HeadingPanel {
 
     private readonly handleListClickListener: (event: MouseEvent) => void;
 
+    private readonly handleCopyButtonClickListener: (event: MouseEvent) => void;
+
     private readonly handleDocumentMouseDownListener: (event: MouseEvent) => void;
 
     private readonly copyButtonController = new CopyButtonController();
@@ -112,6 +114,10 @@ export class HeadingPanel {
             this.handleListClick(event);
         };
 
+        this.handleCopyButtonClickListener = (event: MouseEvent) => {
+            this.handleCopyButtonClick(event);
+        };
+
         this.handleDocumentMouseDownListener = (event: MouseEvent) => {
             const target = event.target as Node | null;
             if (!target) {
@@ -128,6 +134,7 @@ export class HeadingPanel {
         this.input.addEventListener('input', this.handleInputListener);
         this.input.addEventListener('keydown', this.handleKeyDownListener);
         this.list.addEventListener('click', this.handleListClickListener);
+        this.list.addEventListener('click', this.handleCopyButtonClickListener);
         this.ownerDocument().addEventListener('mousedown', this.handleDocumentMouseDownListener, true);
     }
 
@@ -182,6 +189,7 @@ export class HeadingPanel {
         this.input.removeEventListener('input', this.handleInputListener);
         this.input.removeEventListener('keydown', this.handleKeyDownListener);
         this.list.removeEventListener('click', this.handleListClickListener);
+        this.list.removeEventListener('click', this.handleCopyButtonClickListener);
         this.ownerDocument().removeEventListener('mousedown', this.handleDocumentMouseDownListener, true);
         if (this.previewDebounceTimer !== null) {
             clearTimeout(this.previewDebounceTimer);
@@ -386,6 +394,34 @@ export class HeadingPanel {
         }
     }
 
+    private handleCopyButtonClick(event: MouseEvent): void {
+        const target = event.target as HTMLElement | null;
+        const copyButton = target?.closest<HTMLButtonElement>('.heading-navigator-copy-button');
+        if (!copyButton) {
+            return;
+        }
+
+        event.stopPropagation();
+        event.preventDefault();
+
+        const itemElement = copyButton.closest<HTMLLIElement>('.heading-navigator-item');
+        if (!itemElement) {
+            return;
+        }
+
+        const headingId = itemElement.dataset.headingId;
+        if (!headingId) {
+            return;
+        }
+
+        const heading = this.headings.find((item) => item.id === headingId);
+        if (heading) {
+            this.onCopy(heading);
+            this.copyButtonController.showCopyFeedback(copyButton);
+            this.input.focus();
+        }
+    }
+
     private render(): void {
         if (!this.filtered.length) {
             this.renderEmptyState();
@@ -402,6 +438,8 @@ export class HeadingPanel {
      * Clears the list and displays a "No headings found" message.
      */
     private renderEmptyState(): void {
+        // Clean up all copy button timers before clearing
+        this.copyButtonController.destroy(this.list);
         this.list.innerHTML = '';
         const empty = document.createElement('li');
         empty.className = 'heading-navigator-empty';
@@ -440,6 +478,11 @@ export class HeadingPanel {
         const filteredIds = new Set(this.filtered.map((h) => h.id));
         existingItems.forEach((item, id) => {
             if (!filteredIds.has(id)) {
+                // Clean up copy button timer before removing
+                const copyButton = item.querySelector<HTMLButtonElement>('.heading-navigator-copy-button');
+                if (copyButton) {
+                    this.copyButtonController.clearButton(copyButton);
+                }
                 item.remove();
                 existingItems.delete(id);
             }
@@ -487,19 +530,7 @@ export class HeadingPanel {
         text.className = 'heading-navigator-item-text';
         text.textContent = heading.text;
 
-        // Resolve current heading at click time to avoid stale closure
-        const copyButton = this.copyButtonController.createCopyButton(
-            heading,
-            (h) => {
-                const currentHeading = this.headings.find((item) => item.id === h.id);
-                if (currentHeading) {
-                    this.onCopy(currentHeading);
-                }
-            },
-            () => {
-                this.input.focus();
-            }
-        );
+        const copyButton = this.copyButtonController.createCopyButton();
 
         item.appendChild(level);
         item.appendChild(text);

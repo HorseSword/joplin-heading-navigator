@@ -1,11 +1,8 @@
-import type { HeadingItem } from '../../types';
-
 /**
  * Manages copy button creation, animations, and cleanup for heading items.
  *
  * Handles the lifecycle of copy buttons including:
  * - DOM creation with SVG icons
- * - Click event handling
  * - Visual feedback animations
  * - Timer cleanup to prevent memory leaks
  */
@@ -15,19 +12,12 @@ export class CopyButtonController {
     /**
      * Creates a copy button element for a heading item.
      *
-     * The button displays a link icon and shows visual feedback when clicked.
-     * Resolves the current heading at click time to avoid stale closures.
+     * The button displays a link icon. Click handling is managed via event delegation
+     * in the parent panel for better performance with large lists.
      *
-     * @param heading - The heading this button is associated with
-     * @param onCopy - Callback invoked when the button is clicked with the resolved heading
-     * @param onAfterCopy - Optional callback invoked after copy (for focus management)
      * @returns The configured button element ready to be added to the DOM
      */
-    public createCopyButton(
-        heading: HeadingItem,
-        onCopy: (heading: HeadingItem) => void,
-        onAfterCopy?: () => void
-    ): HTMLButtonElement {
+    public createCopyButton(): HTMLButtonElement {
         const copyButton = document.createElement('button');
         copyButton.type = 'button';
         copyButton.className = 'heading-navigator-copy-button';
@@ -46,18 +36,6 @@ export class CopyButtonController {
         svg.appendChild(path1);
         svg.appendChild(path2);
         copyButton.appendChild(svg);
-
-        copyButton.addEventListener('click', (event) => {
-            event.stopPropagation();
-            event.preventDefault();
-
-            onCopy(heading);
-            this.showCopyFeedback(copyButton);
-
-            if (onAfterCopy) {
-                onAfterCopy();
-            }
-        });
 
         return copyButton;
     }
