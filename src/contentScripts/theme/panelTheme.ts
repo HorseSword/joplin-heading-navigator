@@ -74,8 +74,8 @@ export function createPanelCss(dimensions: PanelDimensions): string {
     mask-repeat: no-repeat;
     -webkit-mask-position: center;
     mask-position: center;
-    -webkit-mask-size: 12px 12px;
-    mask-size: 12px 12px;
+    -webkit-mask-size: 14px 14px;
+    mask-size: 14px 14px;
 }
 
 .heading-navigator-input::-webkit-search-cancel-button:hover {
