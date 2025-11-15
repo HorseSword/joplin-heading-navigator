@@ -1,6 +1,6 @@
 import { EditorView } from '@codemirror/view';
 import type { HeadingItem, PanelDimensions } from '../../types';
-import { createPanelCss, createPanelTheme } from '../theme/panelTheme';
+import { createPanelCss } from '../theme/panelTheme';
 import { CopyButtonController } from './copyButtonController';
 
 const PANEL_STYLE_ID = 'heading-navigator-styles';
@@ -548,10 +548,8 @@ export class HeadingPanel {
 
 function ensurePanelStyles(view: EditorView, options: PanelDimensions): void {
     const doc = view.dom.ownerDocument ?? document;
-    const theme = createPanelTheme(view);
-    // Use Object.values to automatically include all theme fields in signature,
-    // preventing cache misses when any theme property changes
-    const signature = [...Object.values(theme), options.width.toString(), options.maxHeightRatio.toFixed(4)].join('|');
+    // Cache key based only on dimensions since CSS variables handle theme changes automatically
+    const signature = [options.width.toString(), options.maxHeightRatio.toFixed(4)].join('|');
 
     let style = doc.getElementById(PANEL_STYLE_ID) as HTMLStyleElement | null;
     if (!style) {
@@ -560,10 +558,10 @@ function ensurePanelStyles(view: EditorView, options: PanelDimensions): void {
         (doc.head ?? doc.body).appendChild(style);
     }
 
-    if (style.getAttribute('data-theme-signature') === signature) {
+    if (style.getAttribute('data-dimensions-signature') === signature) {
         return;
     }
 
-    style.setAttribute('data-theme-signature', signature);
-    style.textContent = createPanelCss(theme, options);
+    style.setAttribute('data-dimensions-signature', signature);
+    style.textContent = createPanelCss(options);
 }
