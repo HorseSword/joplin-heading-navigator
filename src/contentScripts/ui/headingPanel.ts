@@ -74,8 +74,6 @@ export class HeadingPanel {
 
     private readonly handleListClickListener: (event: MouseEvent) => void;
 
-    private readonly handleCopyButtonClickListener: (event: MouseEvent) => void;
-
     private readonly handleDocumentMouseDownListener: (event: MouseEvent) => void;
 
     private readonly copyButtonController = new CopyButtonController();
@@ -114,10 +112,6 @@ export class HeadingPanel {
             this.handleListClick(event);
         };
 
-        this.handleCopyButtonClickListener = (event: MouseEvent) => {
-            this.handleCopyButtonClick(event);
-        };
-
         this.handleDocumentMouseDownListener = (event: MouseEvent) => {
             const target = event.target as Node | null;
             if (!target) {
@@ -134,7 +128,6 @@ export class HeadingPanel {
         this.input.addEventListener('input', this.handleInputListener);
         this.input.addEventListener('keydown', this.handleKeyDownListener);
         this.list.addEventListener('click', this.handleListClickListener);
-        this.list.addEventListener('click', this.handleCopyButtonClickListener);
         this.ownerDocument().addEventListener('mousedown', this.handleDocumentMouseDownListener, true);
     }
 
@@ -189,7 +182,6 @@ export class HeadingPanel {
         this.input.removeEventListener('input', this.handleInputListener);
         this.input.removeEventListener('keydown', this.handleKeyDownListener);
         this.list.removeEventListener('click', this.handleListClickListener);
-        this.list.removeEventListener('click', this.handleCopyButtonClickListener);
         this.ownerDocument().removeEventListener('mousedown', this.handleDocumentMouseDownListener, true);
         if (this.previewDebounceTimer !== null) {
             clearTimeout(this.previewDebounceTimer);
@@ -374,9 +366,33 @@ export class HeadingPanel {
 
     private handleListClick(event: MouseEvent): void {
         const target = event.target as HTMLElement | null;
-        if (target?.closest('.heading-navigator-copy-button')) {
+
+        // Handle copy button clicks via delegation
+        const copyButton = target?.closest<HTMLButtonElement>('.heading-navigator-copy-button');
+        if (copyButton) {
+            event.stopPropagation();
+            event.preventDefault();
+
+            const itemElement = copyButton.closest<HTMLLIElement>('.heading-navigator-item');
+            if (!itemElement) {
+                return;
+            }
+
+            const headingId = itemElement.dataset.headingId;
+            if (!headingId) {
+                return;
+            }
+
+            const heading = this.headings.find((item) => item.id === headingId);
+            if (heading) {
+                this.onCopy(heading);
+                this.copyButtonController.showCopyFeedback(copyButton);
+                this.input.focus();
+            }
             return;
         }
+
+        // Handle item selection clicks
         const itemElement = target?.closest<HTMLLIElement>('.heading-navigator-item');
         if (!itemElement) {
             return;
@@ -391,34 +407,6 @@ export class HeadingPanel {
         if (heading) {
             this.selectedHeadingId = heading.id;
             this.confirmSelection();
-        }
-    }
-
-    private handleCopyButtonClick(event: MouseEvent): void {
-        const target = event.target as HTMLElement | null;
-        const copyButton = target?.closest<HTMLButtonElement>('.heading-navigator-copy-button');
-        if (!copyButton) {
-            return;
-        }
-
-        event.stopPropagation();
-        event.preventDefault();
-
-        const itemElement = copyButton.closest<HTMLLIElement>('.heading-navigator-item');
-        if (!itemElement) {
-            return;
-        }
-
-        const headingId = itemElement.dataset.headingId;
-        if (!headingId) {
-            return;
-        }
-
-        const heading = this.headings.find((item) => item.id === headingId);
-        if (heading) {
-            this.onCopy(heading);
-            this.copyButtonController.showCopyFeedback(copyButton);
-            this.input.focus();
         }
     }
 
