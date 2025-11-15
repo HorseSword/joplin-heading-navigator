@@ -25,11 +25,11 @@
 ### Panel UI Modules
 
 - `src/contentScripts/ui/headingPanel.ts`: renders the floating panel DOM, wires keyboard/mouse interactions, manages filtering, and emits preview/select/copy callbacks. Each heading exposes a hover-only copy button that animates to a confirmation checkmark and fades out after copying.
-- `src/contentScripts/theme/panelTheme.ts`: derives theme-aware colors from the current editor styles and produces the CSS injected by `HeadingPanel`.
+- `src/contentScripts/theme/panelTheme.ts`: generates CSS using Joplin's theme variables (e.g., `--joplin-color`, `--joplin-background-color3`, `--joplin-selected-color`) for automatic theme integration. The panel adapts to light/dark themes and custom user themes without JavaScript color computation. Only dynamic panel dimensions (width, maxHeight) are injected at runtime; all colors are handled via CSS variables with fallback values.
 
 ### Utilities & Data
 
-- `src/headingExtractor.ts`: wraps the Lezer Markdown parser to detect ATX/Setext headings, normalizes text, and records byte offsets + line numbers.
+- `src/headingExtractor.ts`: wraps the Lezer Markdown parser to detect ATX/Setext headings, normalizes text, and records byte offsets + line numbers. Uses CodeMirror's `Text.lineAt()` for efficient position-to-line number conversion.
 - `src/messages.ts`: shared content-script → host message contracts (currently the copy-heading-link request).
 - `src/settings.ts`: registers plugin settings and normalizes values for the content script.
 - `src/panelDimensions.ts`: centralizes panel sizing defaults, normalization helpers, and min/max bounds shared between the plugin host and content script.
