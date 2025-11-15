@@ -59,18 +59,25 @@ export function createPanelCss(dimensions: PanelDimensions): string {
     height: 16px;
     width: 16px;
     border-radius: 50%;
-    background-color: --joplin-color;
+    color: var(--joplin-color, #7c8b9e);
     cursor: pointer;
     opacity: 0.75;
     transition: opacity 120ms ease-out;
-    /* X icon using CSS */
-    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12'%3E%3Cpath d='M2 2l8 8m0-8L2 10' stroke='%23627284' stroke-width='1.8' stroke-linecap='round'/%3E%3C/svg%3E");
-    background-repeat: no-repeat;
-    background-position: center;
+    /* Render X icon via mask so it inherits currentColor */
+    background-color: currentColor;
+    -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12'%3E%3Cpath d='M2 2l8 8m0-8L2 10' fill='none' stroke='white' stroke-width='1.8' stroke-linecap='round'/%3E%3C/svg%3E");
+    mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12'%3E%3Cpath d='M2 2l8 8m0-8L2 10' fill='none' stroke='white' stroke-width='1.8' stroke-linecap='round'/%3E%3C/svg%3E");
+    -webkit-mask-repeat: no-repeat;
+    mask-repeat: no-repeat;
+    -webkit-mask-position: center;
+    mask-position: center;
+    -webkit-mask-size: 12px 12px;
+    mask-size: 12px 12px;
 }
 
 .heading-navigator-input::-webkit-search-cancel-button:hover {
     opacity: 1;
+    color: var(--joplin-color, #131313);
 }
 
 .heading-navigator-list {
