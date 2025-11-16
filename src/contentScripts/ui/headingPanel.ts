@@ -6,6 +6,8 @@ import { CopyButtonController } from './copyButtonController';
 const PANEL_STYLE_ID = 'heading-navigator-styles';
 const INDENT_BASE_PX = 12;
 const INDENT_PER_LEVEL_PX = 12;
+const FILTER_DEBOUNCE_MS = 60;
+const PREVIEW_DEBOUNCE_MS = 30;
 
 export type PanelCloseReason = 'escape' | 'blur';
 
@@ -60,6 +62,8 @@ export class HeadingPanel {
 
     private previewDebounceTimer: number | null = null;
 
+    private filterDebounceTimer: number | null = null;
+
     private readonly onPreview: (heading: HeadingItem) => void;
 
     private readonly onSelect: (heading: HeadingItem) => void;
@@ -100,8 +104,7 @@ export class HeadingPanel {
         this.container.appendChild(this.list);
 
         this.handleInputListener = () => {
-            this.applyFilter(this.input.value);
-            this.notifyPreview();
+            this.scheduleFilterUpdate();
         };
 
         this.handleKeyDownListener = (event: KeyboardEvent) => {
@@ -187,6 +190,10 @@ export class HeadingPanel {
             clearTimeout(this.previewDebounceTimer);
             this.previewDebounceTimer = null;
         }
+        if (this.filterDebounceTimer !== null) {
+            clearTimeout(this.filterDebounceTimer);
+            this.filterDebounceTimer = null;
+        }
         this.copyButtonController.destroy(this.list);
         if (this.container.parentElement) {
             this.container.parentElement.removeChild(this.container);
@@ -261,6 +268,18 @@ export class HeadingPanel {
         this.render();
     }
 
+    private scheduleFilterUpdate(): void {
+        if (this.filterDebounceTimer !== null) {
+            clearTimeout(this.filterDebounceTimer);
+        }
+
+        this.filterDebounceTimer = window.setTimeout(() => {
+            this.filterDebounceTimer = null;
+            this.applyFilter(this.input.value);
+            this.notifyPreview();
+        }, FILTER_DEBOUNCE_MS);
+    }
+
     private notifyPreview(): void {
         if (this.previewDebounceTimer !== null) {
             clearTimeout(this.previewDebounceTimer);
@@ -298,7 +317,7 @@ export class HeadingPanel {
 
             this.lastPreviewedId = currentHeading.id;
             this.onPreview(currentHeading);
-        }, 30);
+        }, PREVIEW_DEBOUNCE_MS);
     }
 
     private updatePreviewMarker(): void {
