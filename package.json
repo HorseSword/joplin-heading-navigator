@@ -29,7 +29,6 @@
         "@codemirror/state": "6.5.2",
         "@codemirror/view": "6.38.7",
         "@lezer/markdown": "1.6.0",
-        "@joplin/utils": "^3.5.1",
         "chalk": "^4.1.0",
         "copy-webpack-plugin": "^13.0.1",
         "eslint": "^9.39.1",
