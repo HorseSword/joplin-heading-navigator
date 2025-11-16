@@ -32,11 +32,11 @@ heading-navigator-documentation.md
 
 ## Logging
 
-User Joplin logger instead of console.log, usage example:
+Use `src\logger.ts` instead of console.log, usage example:
 
-```
+```ts
 import logger from './logger';
 
-logger.info('Plugin started');
-logger.warn('error test', err);
+logger.warn('Warning message', { context: 'data' });
+logger.error('Error occurred', error);
 ```
