@@ -68,7 +68,9 @@ function extractInlineText(node: SyntaxNode, doc: string): string {
         return '';
     }
 
-    let last = node.from; // position to detect gaps (start from node beginning, not first child)
+    // Start from node beginning to capture Setext heading text before underlines.
+    // ATX HeaderMark (#) is always first child at node.from, so no gap is detected before it.
+    let last = node.from;
 
     do {
         const name = cursor.name;
@@ -118,11 +120,9 @@ function extractInlineText(node: SyntaxNode, doc: string): string {
         last = to;
     } while (cursor.nextSibling());
 
-    // Final trailing gap (skip trailing newlines for Setext headings)
+    // Include any trailing gap. Whitespace is normalized by trim() in normalizeHeadingText.
     if (last < node.to) {
-        const gap = doc.slice(last, node.to);
-        // Only include gap if it's not just whitespace/newlines at the end
-        out += gap;
+        out += doc.slice(last, node.to);
     }
 
     return out;
