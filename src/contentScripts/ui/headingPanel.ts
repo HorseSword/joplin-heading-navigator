@@ -577,9 +577,12 @@ export class HeadingPanel {
             return;
         }
 
-        // Position of the item within the scroll container
-        const itemTop = activeItem.offsetTop;
-        const itemBottom = itemTop + activeItem.offsetHeight;
+        // Measure relative position using bounding rects to avoid offsetParent quirks
+        const containerRect = container.getBoundingClientRect();
+        const itemRect = activeItem.getBoundingClientRect();
+
+        const itemTop = itemRect.top - containerRect.top + container.scrollTop;
+        const itemBottom = itemRect.bottom - containerRect.top + container.scrollTop;
 
         // Visible boundaries
         const viewTop = container.scrollTop;
