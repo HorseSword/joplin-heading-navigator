@@ -70,7 +70,7 @@ function extractInlineText(node: SyntaxNode, doc: string): string {
 
     // Start from node beginning to capture Setext heading text before underlines.
     // ATX HeaderMark (#) is always first child at node.from, so no gap is detected before it.
-    let last = node.from;
+    let lastPos = node.from;
 
     do {
         const name = cursor.name;
@@ -78,8 +78,8 @@ function extractInlineText(node: SyntaxNode, doc: string): string {
         const to = cursor.to;
 
         // --- Handle gaps (plain unformatted text between inline elements) ---
-        if (from > last) {
-            out += doc.slice(last, from);
+        if (from > lastPos) {
+            out += doc.slice(lastPos, from);
         }
 
         // --- Skip non-content tokens ---
@@ -90,7 +90,7 @@ function extractInlineText(node: SyntaxNode, doc: string): string {
             name === 'LinkLabel' ||
             name === 'LinkTitle'
         ) {
-            last = to;
+            lastPos = to;
             continue;
         }
 
@@ -98,31 +98,31 @@ function extractInlineText(node: SyntaxNode, doc: string): string {
         if (name === 'Escape') {
             // Escape node contains both backslash and character, extract just the character
             out += doc.slice(from + 1, to);
-            last = to;
+            lastPos = to;
             continue;
         }
 
         // --- Skip HTML tags (matches behavior of Obsidian and other apps) ---
         if (name === 'HTMLTag') {
-            last = to;
+            lastPos = to;
             continue;
         }
 
         // --- Leaf text ---
         if (name === 'Text' || name === 'CodeText') {
             out += doc.slice(from, to);
-            last = to;
+            lastPos = to;
             continue;
         }
 
         // --- Recurse into inline containers (Emphasis, Link, Image, InlineCode, etc.) ---
         out += extractInlineText(cursor.node, doc);
-        last = to;
+        lastPos = to;
     } while (cursor.nextSibling());
 
     // Include any trailing gap. Whitespace is normalized by trim() in normalizeHeadingText.
-    if (last < node.to) {
-        out += doc.slice(last, node.to);
+    if (lastPos < node.to) {
+        out += doc.slice(lastPos, node.to);
     }
 
     return out;
