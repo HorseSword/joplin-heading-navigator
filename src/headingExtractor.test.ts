@@ -60,11 +60,11 @@ describe('extractHeadings', () => {
         expect(extractHeadings('Plain text only')).toEqual([]);
     });
 
-    it('retains special characters inside heading text', () => {
+    it('strips HTML tags but retains other special characters', () => {
         const headings = extractHeadings('## Hello & <world>');
         expect(headings).toHaveLength(1);
         expect(headings[0]).toMatchObject({
-            text: 'Hello & <world>',
+            text: 'Hello &',
             level: 2,
             line: 0,
         });
