@@ -131,7 +131,7 @@ export class HeadingPanel {
         this.input.addEventListener('input', this.handleInputListener);
         this.input.addEventListener('keydown', this.handleKeyDownListener);
         this.list.addEventListener('click', this.handleListClickListener);
-        this.ownerDocument().addEventListener('mousedown', this.handleDocumentMouseDownListener, true);
+        this.view.dom.ownerDocument!.addEventListener('mousedown', this.handleDocumentMouseDownListener, true);
     }
 
     /**
@@ -185,7 +185,7 @@ export class HeadingPanel {
         this.input.removeEventListener('input', this.handleInputListener);
         this.input.removeEventListener('keydown', this.handleKeyDownListener);
         this.list.removeEventListener('click', this.handleListClickListener);
-        this.ownerDocument().removeEventListener('mousedown', this.handleDocumentMouseDownListener, true);
+        this.view.dom.ownerDocument!.removeEventListener('mousedown', this.handleDocumentMouseDownListener, true);
         if (this.previewDebounceTimer !== null) {
             clearTimeout(this.previewDebounceTimer);
             this.previewDebounceTimer = null;
@@ -220,10 +220,6 @@ export class HeadingPanel {
     public setOptions(options: PanelDimensions): void {
         this.options = options;
         ensurePanelStyles(this.view, this.options);
-    }
-
-    private ownerDocument(): Document {
-        return this.view.dom.ownerDocument ?? document;
     }
 
     private mount(): void {
@@ -621,7 +617,7 @@ export class HeadingPanel {
 }
 
 function ensurePanelStyles(view: EditorView, options: PanelDimensions): void {
-    const doc = view.dom.ownerDocument ?? document;
+    const doc = view.dom.ownerDocument!;
     // Cache key based only on dimensions since CSS variables handle theme changes automatically
     const signature = [options.width.toString(), options.maxHeightRatio.toFixed(4)].join('|');
 
