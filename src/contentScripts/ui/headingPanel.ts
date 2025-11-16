@@ -559,9 +559,42 @@ export class HeadingPanel {
         });
     }
 
+    /**
+     * Ensures the selected item is visible inside the scrolling container.
+     *
+     * Uses manual scroll positioning instead of scrollIntoView() to avoid:
+     * - layout thrash during rapid selection changes
+     * - accidental scrolling of ancestor containers
+     *
+     * This matches the strategy used by VS Code's list widgets and is
+     * significantly smoother when filtering or holding arrow keys.
+     */
     private scrollActiveItemIntoView(): void {
-        const activeItem = this.list.querySelector<HTMLLIElement>('.heading-navigator-item.is-selected');
-        activeItem?.scrollIntoView({ block: 'nearest' });
+        const container = this.list;
+        const activeItem = container.querySelector<HTMLLIElement>('.heading-navigator-item.is-selected');
+
+        if (!activeItem) {
+            return;
+        }
+
+        // Position of the item within the scroll container
+        const itemTop = activeItem.offsetTop;
+        const itemBottom = itemTop + activeItem.offsetHeight;
+
+        // Visible boundaries
+        const viewTop = container.scrollTop;
+        const viewBottom = viewTop + container.clientHeight;
+
+        // Scroll upward if above the visible area
+        if (itemTop < viewTop) {
+            container.scrollTop = itemTop;
+            return;
+        }
+
+        // Scroll downward if below the visible area
+        if (itemBottom > viewBottom) {
+            container.scrollTop = itemBottom - container.clientHeight;
+        }
     }
 }
 
