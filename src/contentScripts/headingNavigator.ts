@@ -330,25 +330,14 @@ function setEditorSelection(view: EditorView, heading: HeadingItem, focusEditor:
 }
 
 /**
- * Heading navigator content script module for CodeMirror 6.
+ * Builds the CodeMirror content script module that powers the heading navigator panel.
  *
- * Provides a floating panel for quick heading navigation within Joplin markdown notes.
- * Integrates with the CodeMirror editor to:
- * - Extract headings from the current document using Lezer parser
- * - Display a filterable, keyboard-navigable heading list
- * - Scroll to headings with layout-shift verification for dynamic content
- * - Copy heading links to clipboard via the plugin host
- * - Track active heading based on cursor position
- * - Preserve editor state when panel closes (selection, scroll position)
+ * Registers listeners and commands on the provided editor control, keeps the heading list
+ * and active selection in sync with document changes, and routes panel actions (preview,
+ * select, copy, close) back to the editor or plugin host as needed.
  *
- * The module registers a CodeMirror plugin that:
- * 1. Listens for document and selection changes
- * 2. Updates heading list and active heading in real-time
- * 3. Handles the `headingNavigator.togglePanel` command from the plugin host
- * 4. Manages panel lifecycle and dimension updates
- *
- * @param context - Content script context for messaging with plugin host
- * @returns CodeMirror content script module with plugin factory
+ * @param context - Messaging bridge used when the panel requests privileged actions
+ * @returns Content script module consumed by Joplin's editor runtime
  */
 export default function headingNavigator(context: ContentScriptContext): MarkdownEditorContentScriptModule {
     return {
