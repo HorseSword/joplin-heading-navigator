@@ -84,8 +84,9 @@ function extractInlineText(node: SyntaxNode, doc: string): string {
 
         // --- Skip non-content tokens ---
         if (
-            name.endsWith('Mark') || // EmphasisMark, StrongMark, CodeMark, LinkMark...
+            name.endsWith('Mark') || // EmphasisMark, StrongMark, CodeMark, LinkMark, ImageMark...
             name === 'HeaderMark' || // ATX heading # symbols and Setext underlines
+            name === 'Image' || // Skip images entirely (no alt text extraction)
             name === 'URL' ||
             name === 'LinkLabel' ||
             name === 'LinkTitle'
@@ -115,7 +116,7 @@ function extractInlineText(node: SyntaxNode, doc: string): string {
             continue;
         }
 
-        // --- Recurse into inline containers (Emphasis, Link, Image, InlineCode, etc.) ---
+        // --- Recurse into inline containers (Emphasis, Link, InlineCode, etc.) ---
         out += extractInlineText(cursor.node, doc);
         lastPos = to;
     } while (cursor.nextSibling());

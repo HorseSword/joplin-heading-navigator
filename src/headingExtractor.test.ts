@@ -178,14 +178,14 @@ describe('extractHeadings', () => {
 ## *Italic* Text
 ### \`code\` section
 #### [Link Text](https://example.com)
-##### ![Alt Text](image.png)`;
+##### ![Alt Text](image.png) Image`;
         const headings = extractHeadings(content);
 
         expect(headings[0].text).toBe('Bold Heading');
         expect(headings[1].text).toBe('Italic Text');
         expect(headings[2].text).toBe('code section');
         expect(headings[3].text).toBe('Link Text');
-        expect(headings[4].text).toBe('Alt Text');
+        expect(headings[4].text).toBe('Image');
     });
 
     it('handles nested and mixed inline formatting', () => {
