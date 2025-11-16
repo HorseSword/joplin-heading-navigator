@@ -100,9 +100,8 @@ function extractInlineText(node: SyntaxNode, doc: string): string {
             continue;
         }
 
-        // --- Include HTML tags as-is (user's content, not markdown syntax) ---
+        // --- Skip HTML tags (matches behavior of Obsidian and other apps) ---
         if (name === 'HTMLTag') {
-            out += doc.slice(from, to);
             last = to;
             continue;
         }
