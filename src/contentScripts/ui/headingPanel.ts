@@ -117,15 +117,9 @@ export class HeadingPanel {
 
         this.handleDocumentMouseDownListener = (event: MouseEvent) => {
             const target = event.target as Node | null;
-            if (!target) {
-                return;
+            if (target && !this.container.contains(target)) {
+                this.onClose('blur');
             }
-
-            if (this.container.contains(target)) {
-                return;
-            }
-
-            this.onClose('blur');
         };
 
         this.input.addEventListener('input', this.handleInputListener);
@@ -252,12 +246,7 @@ export class HeadingPanel {
 
         if (this.filtered.length === 0) {
             this.selectedHeadingId = null;
-        } else if (this.selectedHeadingId) {
-            const match = this.filtered.find((heading) => heading.id === this.selectedHeadingId);
-            if (!match) {
-                this.selectedHeadingId = this.filtered[0].id;
-            }
-        } else {
+        } else if (!this.selectedHeadingId || !this.filtered.find((h) => h.id === this.selectedHeadingId)) {
             this.selectedHeadingId = this.filtered[0].id;
         }
 
@@ -361,6 +350,7 @@ export class HeadingPanel {
         }
 
         const currentIndex = this.filtered.findIndex((heading) => heading.id === this.selectedHeadingId);
+        // Wrap around list: adding filtered.length ensures negative deltas wrap correctly
         const nextIndex = currentIndex >= 0 ? (currentIndex + delta + this.filtered.length) % this.filtered.length : 0;
         this.selectedHeadingId = this.filtered[nextIndex].id;
         this.updateSelection();
