@@ -117,15 +117,9 @@ export class HeadingPanel {
 
         this.handleDocumentMouseDownListener = (event: MouseEvent) => {
             const target = event.target as Node | null;
-            if (!target) {
-                return;
+            if (target && !this.container.contains(target)) {
+                this.onClose('blur');
             }
-
-            if (this.container.contains(target)) {
-                return;
-            }
-
-            this.onClose('blur');
         };
 
         this.input.addEventListener('input', this.handleInputListener);
@@ -252,12 +246,7 @@ export class HeadingPanel {
 
         if (this.filtered.length === 0) {
             this.selectedHeadingId = null;
-        } else if (this.selectedHeadingId) {
-            const match = this.filtered.find((heading) => heading.id === this.selectedHeadingId);
-            if (!match) {
-                this.selectedHeadingId = this.filtered[0].id;
-            }
-        } else {
+        } else if (!this.selectedHeadingId || !this.filtered.find((h) => h.id === this.selectedHeadingId)) {
             this.selectedHeadingId = this.filtered[0].id;
         }
 
@@ -361,6 +350,7 @@ export class HeadingPanel {
         }
 
         const currentIndex = this.filtered.findIndex((heading) => heading.id === this.selectedHeadingId);
+        // Wrap around list: adding filtered.length ensures negative deltas wrap correctly
         const nextIndex = currentIndex >= 0 ? (currentIndex + delta + this.filtered.length) % this.filtered.length : 0;
         this.selectedHeadingId = this.filtered[nextIndex].id;
         this.updateSelection();
@@ -451,17 +441,22 @@ export class HeadingPanel {
     }
 
     /**
-     * Performs efficient keyed DOM reconciliation for heading items.
+     * Updates the DOM to match the filtered headings list.
      *
-     * Updates the DOM to match the filtered headings list by:
-     * - Removing empty state node if present
-     * - Reusing existing DOM nodes where possible
-     * - Creating new nodes for new headings
-     * - Updating changed content
-     * - Maintaining correct order
-     * - Updating selection state
+     * Uses keyed reconciliation to efficiently reuse existing DOM nodes.
      */
     private reconcileItems(): void {
+        const existingItems = this.buildItemMap();
+        this.removeStaleItems(existingItems);
+        this.updateAndOrderItems(existingItems);
+    }
+
+    /**
+     * Builds a map of existing heading items and removes empty state if present.
+     *
+     * @returns Map of heading IDs to their DOM elements
+     */
+    private buildItemMap(): Map<string, HTMLLIElement> {
         // Remove empty state node if it exists
         const emptyNode = this.list.querySelector('.heading-navigator-empty');
         if (emptyNode) {
@@ -477,7 +472,17 @@ export class HeadingPanel {
             }
         });
 
-        // Remove items not in filtered list
+        return existingItems;
+    }
+
+    /**
+     * Removes items that are no longer in the filtered list.
+     *
+     * Cleans up copy button timers before removing items to prevent memory leaks.
+     *
+     * @param existingItems - Map of existing items that will be modified by removing stale entries
+     */
+    private removeStaleItems(existingItems: Map<string, HTMLLIElement>): void {
         const filteredIds = new Set(this.filtered.map((h) => h.id));
         existingItems.forEach((item, id) => {
             if (!filteredIds.has(id)) {
@@ -490,8 +495,20 @@ export class HeadingPanel {
                 existingItems.delete(id);
             }
         });
+    }
 
-        // Update or create items in correct order
+    /**
+     * Updates or creates items in correct order and updates selection state.
+     *
+     * For each filtered heading:
+     * - Reuses existing DOM node if available, otherwise creates new one
+     * - Updates content if changed
+     * - Ensures correct DOM order
+     * - Updates selection state
+     *
+     * @param existingItems - Map of existing items to reuse
+     */
+    private updateAndOrderItems(existingItems: Map<string, HTMLLIElement>): void {
         this.filtered.forEach((heading, index) => {
             let item = existingItems.get(heading.id);
 
