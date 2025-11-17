@@ -12,8 +12,9 @@
  * - Content script (headingNavigator.ts): Runs in editor, has CodeMirror access but no Joplin API
  * - Communication: Content script → plugin host via postMessage bridge
  *
- * @see contentScripts/headingNavigator.ts - Content script that sends messages to this host
- * @see messages.ts - Message protocol definitions
+ * See:
+ * - [headingNavigator.ts]({@link ./contentScripts/headingNavigator.ts}) - Content script that sends messages to this host
+ * - [messages.ts]({@link ./contentScripts/messages.ts}) - Message protocol definitions
  */
 
 import joplin from 'api';

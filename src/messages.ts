@@ -5,8 +5,9 @@
  * access Joplin APIs (clipboard, data store, etc.). Messages defined here are sent
  * via the postMessage bridge to the plugin host, which handles the actual operations.
  *
- * @see headingNavigator.ts - Content script that sends these messages
- * @see index.ts - Plugin host that receives and processes messages
+ * See:
+ * - [headingNavigator.ts]({@link ./contentScripts/headingNavigator.ts}) - Content script that sends messages to this host
+ * - [messages.ts]({@link ./messages.ts}) - Message protocol definitions
  */
 
 export interface CopyHeadingLinkMessage {
