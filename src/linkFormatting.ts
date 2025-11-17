@@ -11,6 +11,8 @@
  * ```
  */
 
+// Backslashes, brackets: Required by Markdown syntax
+// HTML chars (<, >, &): Prevents Joplin from rendering HTML tags in link text
 export function escapeLinkText(text: string): string {
     return text
         .replace(/\\/g, '\\\\')
