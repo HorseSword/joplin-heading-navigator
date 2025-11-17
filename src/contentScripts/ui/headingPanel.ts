@@ -451,17 +451,22 @@ export class HeadingPanel {
     }
 
     /**
-     * Performs efficient keyed DOM reconciliation for heading items.
+     * Updates the DOM to match the filtered headings list.
      *
-     * Updates the DOM to match the filtered headings list by:
-     * - Removing empty state node if present
-     * - Reusing existing DOM nodes where possible
-     * - Creating new nodes for new headings
-     * - Updating changed content
-     * - Maintaining correct order
-     * - Updating selection state
+     * Uses keyed reconciliation to efficiently reuse existing DOM nodes.
      */
     private reconcileItems(): void {
+        const existingItems = this.buildItemMap();
+        this.removeStaleItems(existingItems);
+        this.updateAndOrderItems(existingItems);
+    }
+
+    /**
+     * Builds a map of existing heading items and removes empty state if present.
+     *
+     * @returns Map of heading IDs to their DOM elements
+     */
+    private buildItemMap(): Map<string, HTMLLIElement> {
         // Remove empty state node if it exists
         const emptyNode = this.list.querySelector('.heading-navigator-empty');
         if (emptyNode) {
@@ -477,7 +482,17 @@ export class HeadingPanel {
             }
         });
 
-        // Remove items not in filtered list
+        return existingItems;
+    }
+
+    /**
+     * Removes items that are no longer in the filtered list.
+     *
+     * Cleans up copy button timers before removing items to prevent memory leaks.
+     *
+     * @param existingItems - Map of existing items to update
+     */
+    private removeStaleItems(existingItems: Map<string, HTMLLIElement>): void {
         const filteredIds = new Set(this.filtered.map((h) => h.id));
         existingItems.forEach((item, id) => {
             if (!filteredIds.has(id)) {
@@ -490,8 +505,20 @@ export class HeadingPanel {
                 existingItems.delete(id);
             }
         });
+    }
 
-        // Update or create items in correct order
+    /**
+     * Updates or creates items in correct order and updates selection state.
+     *
+     * For each filtered heading:
+     * - Reuses existing DOM node if available, otherwise creates new one
+     * - Updates content if changed
+     * - Ensures correct DOM order
+     * - Updates selection state
+     *
+     * @param existingItems - Map of existing items to reuse
+     */
+    private updateAndOrderItems(existingItems: Map<string, HTMLLIElement>): void {
         this.filtered.forEach((heading, index) => {
             let item = existingItems.get(heading.id);
 
