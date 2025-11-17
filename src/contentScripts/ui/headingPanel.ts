@@ -490,7 +490,7 @@ export class HeadingPanel {
      *
      * Cleans up copy button timers before removing items to prevent memory leaks.
      *
-     * @param existingItems - Map of existing items to update
+     * @param existingItems - Map of existing items that will be modified by removing stale entries
      */
     private removeStaleItems(existingItems: Map<string, HTMLLIElement>): void {
         const filteredIds = new Set(this.filtered.map((h) => h.id));
