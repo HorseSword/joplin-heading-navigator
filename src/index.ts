@@ -13,8 +13,8 @@
  * - Communication: Content script → plugin host via postMessage bridge
  *
  * See:
- * - [headingNavigator.ts]({@link ./contentScripts/headingNavigator.ts}) - Content script that sends messages to this host
- * - [messages.ts]({@link ./contentScripts/messages.ts}) - Message protocol definitions
+ * - headingNavigator.ts - Content script that sends messages to this host
+ * - messages.ts - Message protocol definitions
  */
 
 import joplin from 'api';

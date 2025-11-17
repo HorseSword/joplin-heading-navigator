@@ -18,9 +18,10 @@
  * after initial scroll. The scroll verification system uses retry logic to
  * ensure headings stay pinned to the viewport top despite these shifts.
  *
- * @see index.ts - Plugin host that receives messages from this content script
- * @see messages.ts - Message protocol definitions
- * @see ui/headingPanel.ts - Floating panel UI implementation
+ * See:
+ * - index.ts - Plugin host that receives messages from this content script
+ * - messages.ts - Message protocol definitions
+ * - ui/headingPanel.ts - Floating panel UI implementation
  */
 
 import { EditorSelection, EditorState } from '@codemirror/state';

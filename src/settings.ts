@@ -9,8 +9,9 @@
  * - Validated on load with fallback to defaults if corrupted/out-of-range
  * - Loaded on-demand when the panel opens (not cached in memory)
  *
- * @see panelDimensions.ts - Validation and normalization utilities
- * @see index.ts - Calls registerPanelSettings() on plugin startup
+ * See:
+ * - panelDimensions.ts - Validation and normalization utilities
+ * - index.ts - Calls registerPanelSettings() on plugin startup
  */
 
 import joplin from 'api';

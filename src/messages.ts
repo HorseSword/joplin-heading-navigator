@@ -6,8 +6,8 @@
  * via the postMessage bridge to the plugin host, which handles the actual operations.
  *
  * See:
- * - [headingNavigator.ts]({@link ./contentScripts/headingNavigator.ts}) - Content script that sends messages to this host
- * - [messages.ts]({@link ./messages.ts}) - Message protocol definitions
+ * - headingNavigator.ts - Content script that sends these messages
+ * - index.ts - Plugin host that receives and processes messages
  */
 
 export interface CopyHeadingLinkMessage {
