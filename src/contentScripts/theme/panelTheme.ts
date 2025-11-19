@@ -33,6 +33,7 @@ export function createPanelCss(dimensions: PanelDimensions): string {
     max-height: ${maxHeight};
     display: flex;
     flex-direction: column;
+    font-family: system-ui, sans-serif !important;
     background-color: var(--joplin-background-color3, #f4f5f6);
     color: var(--joplin-color, #32373f);
     border: 1px solid var(--joplin-divider-color, #dddddd);
@@ -135,7 +136,7 @@ export function createPanelCss(dimensions: PanelDimensions): string {
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
-    font-weight: 500;
+    font-weight: 400;
 }
 
 .heading-navigator-copy-button {
