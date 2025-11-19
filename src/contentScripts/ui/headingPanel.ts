@@ -261,11 +261,11 @@ export class HeadingPanel {
         this.filterDebounceTimer = window.setTimeout(() => {
             this.filterDebounceTimer = null;
             this.applyFilter(this.input.value);
-            this.notifyPreview();
+            this.notifyPreview(true);
         }, FILTER_DEBOUNCE_MS);
     }
 
-    private notifyPreview(): void {
+    private notifyPreview(force = false): void {
         if (this.previewDebounceTimer !== null) {
             clearTimeout(this.previewDebounceTimer);
             this.previewDebounceTimer = null;
@@ -276,7 +276,7 @@ export class HeadingPanel {
             return;
         }
 
-        if (this.selectedHeadingId === this.lastPreviewedId) {
+        if (!force && this.selectedHeadingId === this.lastPreviewedId) {
             return;
         }
 
