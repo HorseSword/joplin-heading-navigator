@@ -483,6 +483,11 @@ export default function headingNavigator(context: ContentScriptContext): Markdow
             };
 
             const updateListener = EditorView.updateListener.of((update: ViewUpdate) => {
+                // Skip all work when panel is closed - headings are computed fresh in openPanel()
+                if (!panel || !panel.isOpen()) {
+                    return;
+                }
+
                 if (update.docChanged) {
                     headings = computeHeadings(update.state);
                     updatePanel();
